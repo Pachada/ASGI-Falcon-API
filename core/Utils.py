@@ -9,7 +9,14 @@ import hashlib
 import os
 import base64
 from datetime import timezone
+import logging
 
+def timetz(*args):
+    return datetime.now(pytz.timezone("America/Mexico_City")).timetuple()
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - [ %(levelname)s ]: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.Formatter.converter = timetz
+logger = logging.getLogger(__name__)
 
 class Utils:
     @staticmethod
@@ -148,9 +155,9 @@ class Utils:
         return datetime.utcnow
 
     @staticmethod
-    def serialize_model(object, recursive=False, formatters=None, recursiveLimit=2, blacklist = None, attributes_blacklist = None):
+    def serialize_model(object, recursive=False, blacklist=None, attributes_blacklist=None, recursiveLimit=2):
         """
-        Take an object that can be a model instance or a model instances list
+        Take a Model instance or a Model instances list
         and serialize it in a dictionary recursively, which means that serialization
         will contain model relations. Recursive serilization limit is given by *recursiveLimit*.
 
@@ -160,25 +167,21 @@ class Utils:
                 A model instance or a model instance list.
         recursive : `bool`
                 Indicator if the serializeModel method is or not recursive, False by default.
-        formatters : `dict`
-                A dictionary with functions to apply on specific model fields in serialize process.
-        translator : `function reference`
-                A reference of translate function, None by default.
-        recursiveLimit : `int`
-                The limit of recursion, 3 by default.
         blacklist : `list`
                 A list of model relations to avoid in serialize model.
         attributes_blacklist : `list`
                 A list of model attributes to avoid in serialize model
+        recursiveLimit : `int`
+                The limit of recursion, 3 by default.
 
         Returns
         -------
         `dict`
             A dictionary with serialized data."""
         if blacklist is None:
-            blacklist = []
+            blacklist = set()
         if attributes_blacklist is None:
-            attributes_blacklist = []
+            attributes_blacklist = set()
         if not object:
             if isinstance(object, list):
                 return []
@@ -189,24 +192,22 @@ class Utils:
                 Utils.serialize_model(
                     item,
                     recursive,
-                    formatters,
-                    recursiveLimit=recursiveLimit,
-                    blacklist=blacklist,
-                    attributes_blacklist=attributes_blacklist,
+                    blacklist,
+                    attributes_blacklist,
+                    recursiveLimit
                 )
                 for item in object
             ]
 
         result = {}
-        if formatters is None:
-            formatters = getattr(object, "formatters", object.get_formatters())
-        for c in object.__table__.columns.keys():
-            if c == "password" or c in attributes_blacklist:
+        formatters = object.get_formatters()
+        for key in object.__table__.columns.keys():
+            if key == "password" or key in attributes_blacklist:
                 continue
-            value = getattr(object, str(c))
-            if c in formatters:
-                value = formatters[c](value)
-            result[c] = value
+            value = getattr(object, str(key))
+            if key in formatters:
+                value = formatters[key](value)
+            result[key] = value
         if recursive and recursiveLimit > 1:
             limit = recursiveLimit - 1
             for relation in object.__mapper__.relationships.keys():
@@ -216,8 +217,8 @@ class Utils:
                     result[relation] = Utils.serialize_model(
                         recursiveObj,
                         recursive,
-                        recursiveLimit=limit,
-                        blacklist=blacklistModel,
+                        blacklistModel,
+                        recursiveLimit=limit
                     )
 
         return result
@@ -277,7 +278,7 @@ class Utils:
         config = configparser.ConfigParser()
         config.read(Utils.get_config_ini_file_path())
         otp_expiration_time = int(config.get("EXPIRATION_TIMES", config_row))
-        delta = datetime.now(timezone.utc) - otp_time
+        delta = datetime.utcnow() - otp_time
         return delta.total_seconds() / 60 < otp_expiration_time
 
     @staticmethod

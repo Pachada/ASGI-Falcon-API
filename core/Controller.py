@@ -1,5 +1,4 @@
-from falcon.response import Response
-from falcon.request import Request
+from falcon.asgi import Response, Request
 from datetime import datetime, timedelta, time
 import falcon
 import json
@@ -23,7 +22,7 @@ class Controller:
     def response(
         self, resp, http_code=200, data=None, message=None, error=None, error_code=None
     ):
-        map = {
+        http_codes = {
             200: falcon.HTTP_200,
             201: falcon.HTTP_201,
             400: falcon.HTTP_400,
@@ -35,7 +34,7 @@ class Controller:
             413: falcon.HTTP_413,
             500: falcon.HTTP_500,
         }
-        resp.status = map[http_code]
+        resp.status = http_codes[http_code]
         if isinstance(data, list) and not data:
             data = []
         elif not data:
@@ -66,9 +65,9 @@ class Controller:
             print(exc)
             return False
 
-    def get_req_data(self, req: Request, resp: Response):
+    async def get_req_data(self, req: Request, resp: Response):
         try:
-            data: dict = json.loads(req.stream.read())
+            data: dict = json.loads(await req.stream.read())
         except Exception as exc:
             print(exc)
             self.response(resp, 400, error=str(exc))

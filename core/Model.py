@@ -69,7 +69,7 @@ class Model:
                 file.delete_file_from_local()
 
     @classmethod
-    def get(self, value, filter=None, deleted=False, join=None, order_by=None, with_for_update=False):
+    def get(cls, value, filter=None, deleted=False, join=None, order_by=None, with_for_update=False):
         """
         The get() method can process a query with some parameters to get a response.
 
@@ -92,14 +92,14 @@ class Model:
         ----------
         `object`
             An object with query results."""
-        query = DB.query(self)
+        query = DB.query(cls)
         if join:
             if isinstance(join, list):
                 for model in join:
                     query = query.join(model)
             else:
                 query = query.join(join)
-        if not deleted and "enable" in self.__table__.columns.keys():
+        if not deleted and "enable" in cls.__table__.columns.keys():
             query = query.filter_by(enable=1)
         if filter is not None:
             query = query.filter(filter)
@@ -113,16 +113,7 @@ class Model:
         return query.with_for_update().first() if with_for_update else query.first()
 
     @classmethod
-    def get_all(
-        self,
-        filter=None,
-        limit=None,
-        offset=None,
-        orderBy=None,
-        deleted=False,
-        join=None,
-        left_join=False,
-    ):
+    def get_all(cls, filter=None, limit=None, offset=None, orderBy=None, deleted=False, join=None, left_join=False):
         """
         The get_all() method process a query and returns all found values.
 
@@ -148,15 +139,15 @@ class Model:
         `object`
             An object with all results.
         """
-        query = DB.query(self)
+        query = DB.query(cls)
         if join:
             if isinstance(join, list):
                 for model in join:
                     query = query.join(model, isouter=left_join)
             else:
                 query = query.join(join, isouter=left_join)
-        if not deleted and "enable" in self.__table__.columns.keys():
-            query = query.filter(self.enable == 1)
+        if not deleted and "enable" in cls.__table__.columns.keys():
+            query = query.filter(cls.enable == 1)
         if filter is not None:
             query = query.filter(filter)
         if orderBy is not None:
@@ -222,9 +213,9 @@ class Model:
             return False
 
     @classmethod
-    def delete_multiple(self, filter):
+    def delete_multiple(cls, filter):
         try:
-            query = self.__table__.delete().where(filter)
+            query = cls.__table__.delete().where(filter)
             DB.execute(query)
             DB.commit()
             return True
@@ -233,7 +224,7 @@ class Model:
             return False
 
     @classmethod
-    def count(self, filter=None, deleted=False, join=None):
+    def count(cls, filter=None, deleted=False, join=None):
         """
         The count() method counts all rows depending its parameters wich can be filtered,
         deleted or make a join.
@@ -253,19 +244,19 @@ class Model:
             An object with count() results.
         """
         try:
-            query = DB.query(self)
+            query = DB.query(cls)
             if join:
                 for model in join:
                     query = query.join(model)
-            if not deleted and "enable" in self.__table__.columns.keys():
-                query = query.filter(self.enable == 1)
+            if not deleted and "enable" in cls.__table__.columns.keys():
+                query = query.filter(cls.enable == 1)
             return query.filter(filter).count() if filter is not None else query.count()
         except Exception as exc:
             print(exc)
             return False
 
     @classmethod
-    def sum(self, field, filter=None):
+    def sum(cls, field, filter=None):
         """
         The sum() method sums all rows of a field, if there is not result then returns 0.
 
@@ -282,21 +273,18 @@ class Model:
             Sum of results.
         """
         try:
-            if field and hasattr(self, field):
-                field_ = getattr(self, field, None)
+            if field and hasattr(cls, field):
+                field_ = getattr(cls, field, None)
             query = DB.query(func.sum(field_))
             if filter is not None:
                 query = query.filter(filter)
-            result = query.scalar()
-            if not result:
-                result = 0
-            return result
+            return query.scalar() or 0
         except Exception as exc:
             print(exc)
             return False
 
     @classmethod
-    def max(self, field, filter=None):
+    def max(cls, field, filter=None):
         """
         The max() method process a query and returns the max value of a field.
 
@@ -313,8 +301,8 @@ class Model:
             An object with max result.
         """
         try:
-            if field and hasattr(self, field):
-                field_ = getattr(self, field, None)
+            if field and hasattr(cls, field):
+                field_ = getattr(cls, field, None)
             query = DB.query(func.max(field_))
             if filter is not None:
                 query = query.filter(filter)
@@ -325,7 +313,7 @@ class Model:
             return False
 
     @classmethod
-    def min(self, field, filter=None):
+    def min(cls, field, filter=None):
         """
         The min() method process a query and returns the min value of a field.
 
@@ -342,8 +330,8 @@ class Model:
             An object with min result.
         """
         try:
-            if field and hasattr(self, field):
-                field_ = getattr(self, field, None)
+            if field and hasattr(cls, field):
+                field_ = getattr(cls, field, None)
             query = DB.query(func.min(field_))
             if filter is not None:
                 query = query.filter(filter)
@@ -354,13 +342,13 @@ class Model:
             return False
 
     @classmethod
-    def distinct(self, field, filter=None, deleted=False):
+    def distinct(cls, field, filter=None, deleted=False):
         try:
-            if field and hasattr(self, field):
-                field_ = getattr(self, field, None)
+            if field and hasattr(cls, field):
+                field_ = getattr(cls, field, None)
             query = DB.query(field_)
-            if not deleted and "enable" in self.__table__.columns.keys():
-                query = query.filter(self.enable == 1)
+            if not deleted and "enable" in cls.__table__.columns.keys():
+                query = query.filter(cls.enable == 1)
             if filter is not None:
                 query = query.filter(filter)
 

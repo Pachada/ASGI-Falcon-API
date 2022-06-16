@@ -14,7 +14,7 @@ class NotificationController(Controller):
             filters=(
                 and_(
                     PushNotificationSent.user_id == user.id,
-                    PushNotificationSent.read == 0,
+                    PushNotificationSent.readed == 0,
                 )
             ),
         )

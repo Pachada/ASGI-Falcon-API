@@ -1,9 +1,8 @@
-from falcon.response import Response
-from falcon.request import Request
+from falcon.asgi import Response, Request
 from models.Session import Session
 from models.User import User
 from models.Device import Device
-from core.Utils import Utils
+from core.Utils import Utils, logger
 from sqlalchemy import and_
 import json
 
@@ -102,18 +101,19 @@ class Authenticator(object):
         pass
 
     async def process_resource(self, req: Request, resp: Response, resource, params):
-        if req.path in self.exceptions:
+        # If the route or the route with out the id is in exceptions, session is None
+        if req.path in self.exceptions or ''.join(i for i in req.path if not i.isdigit())[:-1] in self.exceptions:
             req.context.session = None
         else:
             session = Session.get(Session.token == req.auth)
             if not session:
-                print("No session")
+                logger.warning("No session")
                 resource.response(resp, 401, error="Unauthorized")
                 resp.complete = True
                 return
 
             if not Utils.validate_expiration_time(session.updated, "session"):
-                print("Session expired")
+                logger.warning("Session expired")
                 self.logout(session)
                 resource.response(resp, 401, message="Session expired")
                 resp.complete = True
@@ -123,7 +123,7 @@ class Authenticator(object):
             method = req.method
             resource_name = type(resource).__name__
             if not self.__has_privileges(role_name, method, resource_name):
-                print("No privileges")
+                logger.warning("No privileges")
                 resource.response(resp, 401, message="Unauthorized")
                 resp.complete = True
                 return

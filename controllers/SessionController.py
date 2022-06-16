@@ -21,8 +21,8 @@ class SessionController(Controller):
         data = {"session": session_data}
         self.response(resp, 200, data)
 
-    def __login(self, req: Request, resp: Response):
-        data = self.get_req_data(req, resp)
+    async def __login(self, req: Request, resp: Response):
+        data = await self.get_req_data(req, resp)
         if not data:
             return
 
@@ -46,10 +46,10 @@ class SessionController(Controller):
         }
         self.response(resp, 200, data, message="Session started")
 
-    def __logout(self, req: Request, resp: Response):
+    async def __logout(self, req: Request, resp: Response):
         session = req.context.session
         Authenticator.logout(session)
         self.response(resp, 200, message="Session ended")
 
     async def on_post(self, req: Request, resp: Response, action: str):
-        self.actions[action](req, resp)
+        await self.actions[action](req, resp)
