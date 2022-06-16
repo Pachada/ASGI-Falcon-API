@@ -8,7 +8,7 @@ class EmailTemplate(Base, Model):
     ERROR = 3  # flow, title, description, date, procedure
 
     __tablename__ = "email_template"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(45), nullable=False)

@@ -51,7 +51,7 @@ class PasswordRecoveryController(Controller):
 
         self.response(resp, 200, message="OTP enviado satisfactoriamente")
 
-    def __validate_code(self, req: Request, resp: Response):
+    async def __validate_code(self, req: Request, resp: Response):
         data: dict = self.get_req_data(req, resp)
         if not data:
             return
@@ -77,7 +77,7 @@ class PasswordRecoveryController(Controller):
             self.response(resp, 500, self.PROBLEM_SAVING_TO_DB)
             return
 
-        session = Authenticator.login_by_otp(user_verification.user, device_uuid)
+        session = await Authenticator.login_by_otp(user_verification.user, device_uuid)
         req.context.session = session
         data = {
             "session": Utils.serialize_model(

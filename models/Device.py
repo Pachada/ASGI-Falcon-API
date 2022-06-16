@@ -5,7 +5,7 @@ from models.AppVersion import AppVersion
 
 class Device(Base, Model):
     __tablename__ = "device"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     uuid = Column(String(300), nullable=False)

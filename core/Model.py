@@ -12,16 +12,18 @@ from sqlalchemy import (
     SmallInteger,
     Boolean,
     func,
-    distinct
+    distinct,
+    or_, 
+    and_
 )
-from sqlalchemy import or_, and_
 from sqlalchemy.orm import relationship, exc
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm.util import was_deleted, has_identity
-from datetime import datetime
+from datetime import datetime, date
 from core.database import Base, engine, db_session as DB
-from core.Utils import Utils
+from core.Utils import Utils, logger
+from sqlalchemy.future import select
 
 
 class Model:
@@ -32,7 +34,7 @@ class Model:
     """
 
     def get_formatters(self):
-        return {attribute.name: Utils.date_formatter for attribute in self.__table__.columns if attribute.type.python_type == datetime}
+        return {attribute.name: Utils.date_formatter for attribute in self.__table__.columns if attribute.type.python_type in {datetime, date}}
 
     def exists_in_database(self):
         """
@@ -188,8 +190,8 @@ class Model:
             self.enable = 0
             return self.save()
         except Exception as exc:
-            print("[ERROR-SOFT-DELETING]")
-            print(exc)
+            logger.error("[ERROR-SOFT-DELETING]")
+            logger.error(exc)
             return False
 
     def delete(self):
@@ -208,8 +210,8 @@ class Model:
             return True
         except Exception as exc:
             DB.rollback()
-            print("[ERROR-DELETING]")
-            print(exc)
+            logger.error("[ERROR-DELETING]")
+            logger.error(exc)
             return False
 
     @classmethod
@@ -220,7 +222,8 @@ class Model:
             DB.commit()
             return True
         except Exception as exc:
-            print(exc)
+            logger.error("[ERROR-DELETING-MULTIPLE]")
+            logger.error(exc)
             return False
 
     @classmethod
@@ -252,7 +255,8 @@ class Model:
                 query = query.filter(cls.enable == 1)
             return query.filter(filter).count() if filter is not None else query.count()
         except Exception as exc:
-            print(exc)
+            logger.error("[ERROR-COUNTING]")
+            logger.error(exc)
             return False
 
     @classmethod
@@ -280,7 +284,8 @@ class Model:
                 query = query.filter(filter)
             return query.scalar() or 0
         except Exception as exc:
-            print(exc)
+            logger.error("[ERROR_ADDING]")
+            logger.error(exc)
             return False
 
     @classmethod
@@ -309,7 +314,8 @@ class Model:
 
             return query.scalar()
         except Exception as exc:
-            print(exc)
+            logger.error("[ERROR_GETTING-MAX]")
+            logger.error(exc)
             return False
 
     @classmethod
@@ -338,7 +344,8 @@ class Model:
 
             return query.scalar()
         except Exception as exc:
-            print(exc)
+            logger.error("[ERROR-GETTING-MIN]")
+            logger.error(exc)
             return False
 
     @classmethod
@@ -354,7 +361,7 @@ class Model:
 
             return query.distinct().all()
         except Exception as exc:
-            print(exc)
+            logger.error(exc)
             return False
 
     @staticmethod
@@ -382,8 +389,8 @@ class Model:
             return True
         except Exception as exc:
             DB.rollback()
-            print("[ERROR-SAVING-ALL]")
-            print(exc)
+            logger.error("[ERROR-SAVING-ALL]")
+            logger.error(exc)
             return False
 
     @staticmethod
@@ -406,6 +413,6 @@ class Model:
             return True
         except Exception as exc:
             DB.rollback()
-            print("[ERROR-EXPUNGE]")
-            print(exc)
+            logger.error("[ERROR-EXPUNGE]")
+            logger.error(exc)
             return False

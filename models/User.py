@@ -5,7 +5,7 @@ from models.Person import Person
 
 class User(Base, Model):
     __tablename__ = "user"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     username = Column(String(100), nullable=False)
@@ -30,13 +30,11 @@ class User(Base, Model):
     @staticmethod
     def check_if_user_exists(username, email):
         if username:
-            check_username = User.get(User.username == username)
-            if check_username:
+            if check_username := User.get(User.username == username):
                 return True, "This username already exists"
 
         if email:
-            check_email = User.get(User.email == email)
-            if check_email:
+            if check_email := User.get(User.email == email):
                 return True, "This email already has an account"
 
         return False, ""

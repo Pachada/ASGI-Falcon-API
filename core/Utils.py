@@ -178,10 +178,6 @@ class Utils:
         -------
         `dict`
             A dictionary with serialized data."""
-        if blacklist is None:
-            blacklist = set()
-        if attributes_blacklist is None:
-            attributes_blacklist = set()
         if not object:
             if isinstance(object, list):
                 return []
@@ -200,6 +196,10 @@ class Utils:
             ]
 
         result = {}
+        if blacklist is None:
+            blacklist = getattr(object, 'blacklist', set())
+        if attributes_blacklist is None:
+            attributes_blacklist = getattr(object, 'attributes_blacklist', set())
         formatters = object.get_formatters()
         for key in object.__table__.columns.keys():
             if key == "password" or key in attributes_blacklist:
@@ -213,11 +213,9 @@ class Utils:
             for relation in object.__mapper__.relationships.keys():
                 if relation not in blacklist:
                     recursiveObj = getattr(object, relation)
-                    blacklistModel = getattr(recursiveObj, "blacklist", blacklist)
                     result[relation] = Utils.serialize_model(
                         recursiveObj,
                         recursive,
-                        blacklistModel,
                         recursiveLimit=limit
                     )
 
@@ -304,8 +302,6 @@ class Utils:
 
     @staticmethod
     def get_start_date_and_end_date(start_date=None, end_days=15):
-        if not end_days:
-            end_days = 15
 
         if not start_date:
             startdate = datetime.utcnow()

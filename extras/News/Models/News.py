@@ -7,7 +7,7 @@ from models.File import File
 
 class News(Base, Model):
     __tablename__ = "news"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, ForeignKey(User.id))

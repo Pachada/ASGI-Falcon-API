@@ -7,7 +7,7 @@ class Role(Base, Model):
     USER = 2
 
     __tablename__ = "role"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(30), nullable=False)

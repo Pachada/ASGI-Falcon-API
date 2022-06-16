@@ -7,7 +7,7 @@ class RoleController(Controller):
         super().generic_on_get(req, resp, Role, id)
 
     async def on_post(self, req: Request, resp: Response, id: int = None):
-        super().generic_on_post(req, resp, Role, "roles", id)
+        super().generic_on_post(req, resp, Role, id)
 
     async def on_put(self, req: Request, resp: Response, id: int = None):
         super().generic_on_put(req, resp, Role, id)

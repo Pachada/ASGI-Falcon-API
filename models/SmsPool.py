@@ -6,7 +6,7 @@ from models.User import User
 
 class SmsPool(Base, Model):
     __tablename__ = "sms_pool"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, ForeignKey(User.id), nullable=False)

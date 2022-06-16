@@ -16,7 +16,7 @@ class Status(Base, Model):
     VERIFIED = 9
 
     __tablename__ = "status"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     description = Column(String(100), nullable=False)

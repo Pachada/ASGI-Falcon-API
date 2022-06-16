@@ -22,8 +22,10 @@ engine = create_engine(
     pool_recycle=3600,
     pool_timeout=10,
     isolation_level="READ UNCOMMITTED",
-    pool_pre_ping=True,
+    pool_pre_ping=True
 )
+
+
 db_session = scoped_session(
     sessionmaker(autocommit=False, autoflush=False, bind=engine)
 )
@@ -32,20 +34,4 @@ Base = declarative_base()
 Base.query = db_session.query_property()
 
 
-"""@event.listens_for(engine, "engine_connect")
-def ping_connection(connection, branch):
-    if branch:
-        return
-    save_should_close_with_result = connection.should_close_with_result
-    connection.should_close_with_result = False
 
-    try:
-        print(f"ping connection {datetime.now()}")
-        connection.scalar(select([1]))
-    except exc.DBAPIError as err:
-        if err.connection_invalidated:
-            connection.scalar(select([1]))
-        else:
-            raise
-    finally:
-        connection.should_close_with_result = save_should_close_with_result"""

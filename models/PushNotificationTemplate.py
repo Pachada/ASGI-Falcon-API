@@ -6,7 +6,7 @@ class PushNotificationTemplate(Base, Model):
     # Templates                                  #Data
 
     __tablename__ = "push_notification_template"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)

@@ -6,7 +6,7 @@ from models.Device import Device
 
 class PushNotificationSent(Base, Model):
     __tablename__ = "push_notification_sent"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, ForeignKey(User.id))

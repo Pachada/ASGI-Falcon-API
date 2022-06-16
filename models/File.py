@@ -3,7 +3,7 @@ from core.Model import *
 
 class File(Base, Model):
     __tablename__ = "file"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     object = Column(String(255), nullable=False)

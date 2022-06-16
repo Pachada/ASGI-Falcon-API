@@ -3,7 +3,7 @@ from core.Model import *
 
 class AppVersion(Base, Model):
     __tablename__ = "app_version"
-    __autoload_with__ = engine
+    
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     version = Column(Float, nullable=False)

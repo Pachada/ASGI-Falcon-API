@@ -7,7 +7,7 @@ class StatusController(Controller):
         super().generic_on_get(req, resp, Status, id)
 
     async def on_post(self, req: Request, resp: Response, id: int = None):
-        super().generic_on_post(req, resp, Status, "status", id)
+        super().generic_on_post(req, resp, Status, id)
 
     async def on_put(self, req: Request, resp: Response, id: int = None):
         super().generic_on_put(req, resp, Status, id)

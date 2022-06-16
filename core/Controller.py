@@ -1,8 +1,8 @@
 from falcon.asgi import Response, Request
+from falcon import code_to_http_status
 from datetime import datetime, timedelta, time
-import falcon
 import json
-from core.Utils import Utils
+from core.Utils import Utils, logger
 from core.Model import Model
 
 
@@ -22,19 +22,7 @@ class Controller:
     def response(
         self, resp, http_code=200, data=None, message=None, error=None, error_code=None
     ):
-        http_codes = {
-            200: falcon.HTTP_200,
-            201: falcon.HTTP_201,
-            400: falcon.HTTP_400,
-            401: falcon.HTTP_401,
-            403: falcon.HTTP_403,
-            404: falcon.HTTP_404,
-            405: falcon.HTTP_405,
-            409: falcon.HTTP_409,
-            413: falcon.HTTP_413,
-            500: falcon.HTTP_500,
-        }
-        resp.status = http_codes[http_code]
+        resp.status = code_to_http_status(http_code)
         if isinstance(data, list) and not data:
             data = []
         elif not data:
@@ -61,23 +49,22 @@ class Controller:
             return row.save()
 
         except Exception as exc:
-            print("[ERROR-SETTING_VALUES]")
-            print(exc)
+            logger.error("[ERROR-SETTING_VALUES]")
+            logger.error(exc)
             return False
 
     async def get_req_data(self, req: Request, resp: Response):
         try:
             data: dict = json.loads(await req.stream.read())
         except Exception as exc:
-            print(exc)
+            logger.error("[ERROR-GETTING-REQUEST-DATA]")
+            logger.error(exc)
             self.response(resp, 400, error=str(exc))
             return
 
         return data
 
-    def get_model_object(
-        self, req: Request, resp: Response, model: Model, id: int = None
-    ):
+    def get_model_object(self, resp: Response, model: Model, id: int = None):
         if not id:
             self.response(resp, 405)
             return
@@ -102,7 +89,7 @@ class Controller:
         recursiveLimit=2,
     ):
         if id:
-            row = self.get_model_object(req, resp, model, id)
+            row = self.get_model_object(resp, model, id)
             if not row:
                 return
         else:
@@ -121,21 +108,19 @@ class Controller:
         req: Request,
         resp: Response,
         model: Model,
-        content_location,
         id: int = None,
         data=None,
-        extra_data: dict = {},
+        extra_data: dict = None
     ):
         if id:
             self.response(resp, 405)
             return
-
         if not data:
             data = self.get_req_data(req, resp)
         if not data:
             return
-
-        data.update(extra_data)
+        if extra_data:
+            data.update(extra_data)
 
         new_record = model()
 
@@ -144,7 +129,7 @@ class Controller:
             return
 
         self.response(resp, 201, Utils.serialize_model(new_record))
-        resp.append_header("content_location", f"/{content_location}/{new_record.id}")
+        #resp.append_header("content_location", f"/{content_location}/{new_record.id}")
 
     def generic_on_put(
         self,
@@ -152,30 +137,27 @@ class Controller:
         resp: Response,
         model: Model,
         id: int = None,
-        extra_data: dict = {},
-        return_row: bool = False
+        data=None,
+        extra_data: dict = None
     ):
         if not id:
             self.response(resp, 405)
             return
-
-        row = self.get_model_object(req, resp, model, id)
+        row = self.get_model_object(resp, model, id)
         if not row:
             return
-
-        data = self.get_req_data(req, resp)
+        if not data:
+            data = self.get_req_data(req, resp)
         if not data:
             return
-
-        data.update(extra_data)
+        if extra_data:
+            data.update(extra_data)
 
         if not self.set_values(row, data):
             self.response(resp, 500, self.PROBLEM_SAVING_TO_DB)
             return
 
         self.response(resp, 200, Utils.serialize_model(row))
-
-        if return_row: return row
 
     def generic_on_delete(
         self,
@@ -191,7 +173,7 @@ class Controller:
             self.response(resp, 405)
             return
 
-        row = self.get_model_object(req, resp, model, id)
+        row: Model = self.get_model_object(resp, model, id)
         if not row:
             return
 
@@ -201,6 +183,8 @@ class Controller:
             row.delete_model_files(req, resp)
             if not row.exists_in_database():  # Checamos que el row aún exista
                 self.response(resp, 200, data)
+                if return_row:
+                    return row
                 return
 
         deleted = row.soft_delete() if soft_delete else row.delete()
@@ -210,4 +194,5 @@ class Controller:
 
         self.response(resp, 200, data)
 
-        if return_row: return row
+        if return_row:
+            return row

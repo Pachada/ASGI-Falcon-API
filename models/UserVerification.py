@@ -6,7 +6,6 @@ from models.Status import Status
 
 class UserVerification(Base, Model):
     __tablename__ = "user_verification"
-    __autoload_with__ = engine
 
     user_id = Column(BigInteger, ForeignKey(User.id), primary_key=True, nullable=False)
     curp = Column(String(45), default=None)

@@ -6,7 +6,7 @@ from models.Status import Status
 
 class PushNotificationPool(Base, Model):
     __tablename__ = "push_notification_pool"
-    __autoload_with__ = engine
+    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, ForeignKey(User.id), default=None)

@@ -13,7 +13,7 @@ class UserController(Controller):
             self.response(resp, 405)
             return
 
-        data: dict = self.get_req_data(req, resp)
+        data: dict = await self.get_req_data(req, resp)
         if not data:
             return
 

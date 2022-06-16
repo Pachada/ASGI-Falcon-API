@@ -7,7 +7,7 @@ class PersonController(Controller):
         super().generic_on_get(req, resp, Person, id)
 
     async def on_post(self, req: Request, resp: Response, id: int = None):
-        super().generic_on_post(req, resp, Person, "persons", id)
+        super().generic_on_post(req, resp, Person, id)
 
     async def on_put(self, req: Request, resp: Response, id: int = None):
         super().generic_on_put(req, resp, Person, id)
