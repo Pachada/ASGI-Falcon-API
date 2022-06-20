@@ -133,6 +133,42 @@ class Authenticator(object):
     async def process_response(self, req: Request, resp: Response, resource, req_succeeded):
         # Post-processing of the response (after routing).
         pass
+    
+    async def process_request_ws(self, req, ws):
+        """Process a WebSocket handshake request before routing it.
+
+        Note:
+            Because Falcon routes each request based on req.path, a
+            request can be effectively re-routed by setting that
+            attribute to a new value from within process_request().
+
+        Args:
+            req: Request object that will eventually be
+                passed into an on_websocket() responder method.
+            ws: The WebSocket object that will be passed into
+                on_websocket() after routing.
+        """
+        pass
+
+    async def process_resource_ws(self, req, ws, resource, params):
+        """Process a WebSocket handshake request after routing.
+
+        Note:
+            This method is only called when the request matches
+            a route to a resource.
+
+        Args:
+            req: Request object that will be passed to the
+                routed responder.
+            ws: WebSocket object that will be passed to the
+                routed responder.
+            resource: Resource object to which the request was
+                routed.
+            params: A dict-like object representing any additional
+                params derived from the route's URI template fields,
+                that will be passed to the resource's responder
+                method as keyword arguments.
+        """
 
     @staticmethod
     def login(username, password, device_uuid="unknown"):

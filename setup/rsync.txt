@@ -15,3 +15,6 @@ y ya cuando quieran hace rsync:
 
 
 rsync --copy-links -v -a -e ssh -r /home/pachada/Documents/Projects/Restful-API Rest-API:~/api/ --exclude='.git' --exclude='.gitignore' --exclude='files/*' --exclude='config.ini'
+
+
+rsync --copy-links -vae "ssh -i API_Duelazo.pem" -r /mnt/c/Users/Pachada/Documents/Projects/ASGI-Falcon-API/ ubuntu@ec2-18-117-236-205.us-east-2.compute.amazonaws.com:~/asgi/ --exclude='config.ini' --exclude='.git' --exclude='.gitignore' --exclude='files/*'
