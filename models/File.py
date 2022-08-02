@@ -18,6 +18,7 @@ class File(Base, Model):
 
 
     def delete_file_from_s3(self, req, resp):
+        # sourcery skip: class-extract-method
         print(f"Borrando file: {self.id} del s3")
         from controllers import files3Controller
 

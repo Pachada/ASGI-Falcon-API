@@ -76,17 +76,9 @@ class Authenticator(object):
                 break
         if not privileges:
             return False
+        resources = [privilege["resource"] for privilege in privileges if privilege["method"] == method]
 
-        resources = [
-            privilege["resource"]
-            for privilege in privileges
-            if privilege["method"] == method
-        ]
-
-        if not resources:
-            return False
-
-        return resource in resources
+        return resource in resources if resources else False
 
     def __role_privileges(self, role_name):
         for role in self.privileges_tree:
@@ -102,7 +94,7 @@ class Authenticator(object):
 
     async def process_resource(self, req: Request, resp: Response, resource, params):
         # If the route or the route with out the id is in exceptions, session is None
-        if req.path in self.exceptions or ''.join(i for i in req.path if not i.isdigit())[:-1] in self.exceptions:
+        if req.path in self.exceptions or "/".join(req.path.split('/')[:-1]) in self.exceptions:
             req.context.session = None
         else:
             session = Session.get(Session.token == req.auth)

@@ -18,12 +18,6 @@ clients = set()
 class TestController(Controller):
     app_clients = defaultdict(list)
 
-    async def on_get(self, req: Request, resp: Response):
-        pass
-
-    async def on_post(self, req: Request, resp: Response):
-        pass
-
     async def on_websocket(self, req: Request, ws: WebSocket, id: int = None):
         if not id:
             ws.close()

@@ -33,6 +33,9 @@ class Model:
     get one, get all, delete and save. The Model class inherits new models.
     """
 
+    def refresh_object(self, attribute_names=None):
+        DB.refresh(self, attribute_names)
+
     def get_formatters(self):
         return {attribute.name: Utils.date_formatter for attribute in self.__table__.columns if attribute.type.python_type in {datetime, date}}
 

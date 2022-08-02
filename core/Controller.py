@@ -1,3 +1,5 @@
+import contextlib
+import asyncio
 from falcon.asgi import Response, Request, WebSocket
 from falcon import code_to_http_status, WebSocketDisconnected, create_task
 from datetime import datetime, timedelta, time
@@ -196,3 +198,46 @@ class Controller:
 
         if return_row:
             return row
+
+ # -------------------------------- Webscokets --------------------------------
+    async def accept_wb(self, ws: WebSocket, clients: set):
+        try:
+            await ws.accept()
+            clients.add(ws)
+        except WebSocketDisconnected:
+            await self.cleanup(ws)
+            return
+
+    async def cleanup(self, ws: WebSocket, clients: set):
+        with contextlib.suppress(KeyError):
+            clients.remove(ws)
+
+    async def send_message_to_all(self, ws: WebSocket, clients: set, name: str, message: str):
+        try:
+            for client in clients:
+                if client is ws:
+                    continue
+                if not client.ready:
+                    await self.cleanup(client)
+                await client.send_text(f"{name}: {message}")
+                # await client.send_media(
+                #        {'username': name, 'message': message}
+                #    )
+        except WebSocketDisconnected:
+            await self.cleanup(ws)
+            return
+
+    async def ws_response(self, ws: WebSocket, data=None, code=1000, message=None, error=None, error_code=None):
+
+        if isinstance(data, list) and not data:
+            data = []
+        elif not data:
+            data = {}
+        if message:
+            data["message"] = message
+        if error:
+            data["error"] = error
+        if error_code:
+            data["error_code"] = error_code
+        await ws.send_media(data)
+        await ws.close(code)

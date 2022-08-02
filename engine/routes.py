@@ -33,6 +33,7 @@ class RouteLoader:
         self.server.add_route(self.context_prefix + '/devices', deviceController)
         self.server.add_route(self.context_prefix + '/devices/{id:int}', deviceController)
         self.server.add_route(self.context_prefix + '/test', testController)
+        self.server.add_route(self.context_prefix + '/test/{id:int}', testController)
         self.server.add_route(self.context_prefix + '/health-check/{action}', healthcheckController) #ping
         self.server.add_route(self.context_prefix + '/sessions/{action}', sessionController) #login, logout
         self.server.add_route(self.context_prefix + '/sessions', sessionController)
