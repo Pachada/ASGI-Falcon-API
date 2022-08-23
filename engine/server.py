@@ -11,9 +11,7 @@ sqlalchemy_session_manager = SQLAlchemySessionManager()
 # Create server
 def create_server():
 
-    server = App(
-        middleware=[CORS_middleware, authorization_middleware, sqlalchemy_session_manager]
-    )
+    server = App(middleware=[CORS_middleware, authorization_middleware, sqlalchemy_session_manager])
     # server = App())
 
     # Load routes

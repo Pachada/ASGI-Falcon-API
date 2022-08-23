@@ -14,9 +14,7 @@ class SmtpClientCrontab(NotificationCronsUtils):
 
     @staticmethod
     def get_instance():
-        if not SmtpClientCrontab.__instance:
-            return SmtpClientCrontab()
-        return SmtpClientCrontab.__instance
+        return SmtpClientCrontab.__instance or SmtpClientCrontab()
 
     def __init__(self):
         if SmtpClientCrontab.__instance is not None:

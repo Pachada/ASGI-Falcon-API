@@ -45,12 +45,12 @@ class ConfirmEmailController(Controller):
             self.response(resp, 400, error="token field is required")
             return
 
-        user_verification = UserVerification.get(UserVerification.otp == str(email_code))
+        user_verification = UserVerification.get(UserVerification.email_otp == str(email_code))
         if not user_verification:
             self.response(resp, 401, message="Incorrect code")
             return
 
-        if not Utils.validate_expiration_time(user_verification.otp_time, "email_code"):
+        if not Utils.validate_expiration_time(user_verification.email_otp_time, "email_code"):
             self.response(resp, 401, message="code expired")
             return
 

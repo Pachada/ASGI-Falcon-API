@@ -30,9 +30,7 @@ class Utils:
         today = datetime.now(pytz.timezone(timezone))
         if zero_time:
             today = today.replace(hour=0, minute=0, second=0)
-        if as_utc0:
-            return Utils.change_datetime_timezone_to_utc0(today)
-        return today
+        return Utils.change_datetime_timezone_to_utc0(today) if as_utc0 else today
 
     @staticmethod
     def string_to_datetime(date: str):

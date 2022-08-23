@@ -21,9 +21,7 @@ class Controller:
     INVALID_JSON = "Bad Request - Invalid JSON"
     ID_NOT_FOUND = "Not Found - Invalid ID"
 
-    def response(
-        self, resp, http_code=200, data=None, message=None, error=None, error_code=None
-    ):
+    def response(self, resp, http_code=200, data=None, message=None, error=None, error_code=None):
         resp.status = code_to_http_status(http_code)
         if isinstance(data, list) and not data:
             data = []

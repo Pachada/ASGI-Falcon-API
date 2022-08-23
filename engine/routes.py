@@ -1,14 +1,14 @@
 from controllers import *
 import configparser
 from core.classes.Authenticator import Authenticator
-from falcon import API
+from falcon import App
 from core.Utils import Utils
 
 
 class RouteLoader:
-    def __init__(self, server, authorization_middleware):
-        self.server: API = server
-        self.authorization_middleware: Authenticator = authorization_middleware
+    def __init__(self, server: App, authorization_middleware: Authenticator):
+        self.server = server
+        self.authorization_middleware = authorization_middleware
         self.config = configparser.ConfigParser()
         self.config.read(Utils.get_config_ini_file_path())
         self.context_from_config = self.config.get('ROUTES', 'context') 

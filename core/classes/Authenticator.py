@@ -2,7 +2,7 @@ from falcon.asgi import Response, Request
 from models.Session import Session
 from models.User import User
 from models.Device import Device
-from core.Utils import Utils, logger
+from core.Utils import Utils, logger, datetime
 from sqlalchemy import and_
 import json
 
@@ -93,10 +93,7 @@ class Authenticator(object):
         pass
 
     async def process_resource(self, req: Request, resp: Response, resource, params):
-        # If the route or the route with out the id is in exceptions, session is None
-        if req.path in self.exceptions or "/".join(req.path.split('/')[:-1]) in self.exceptions:
-            req.context.session = None
-        else:
+        if req.auth:
             session = Session.get(Session.token == req.auth)
             if not session:
                 logger.warning("No session")
@@ -120,7 +117,14 @@ class Authenticator(object):
                 resp.complete = True
                 return
 
+            # update the session.updated to now
+            """session.updated = datetime.utcnow()
+            session.save()"""
             req.context.session = session
+        
+        # If the route or the route with out the id is in exceptions, session is None
+        elif req.path in self.exceptions or "/".join(req.path.split('/')[:-1]) in self.exceptions:
+            req.context.session = None
 
     async def process_response(self, req: Request, resp: Response, resource, req_succeeded):
         # Post-processing of the response (after routing).
