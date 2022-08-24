@@ -1,11 +1,10 @@
-from core.Model import *
+from core.Async_Model import *
 from models.User import User
 from models.Device import Device
 
 
-class Session(Base, Model):
+class Session(Base, AsyncModel):
     __tablename__ = "session"
-    
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, ForeignKey(User.id), nullable=False)
@@ -17,3 +16,5 @@ class Session(Base, Model):
 
     device = relationship(Device)
     user = relationship(User)
+
+    blacklist = {}

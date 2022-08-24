@@ -1,9 +1,9 @@
 falcon
-SQLAlchemy
+sqlalchemy[asyncio]
 uvicorn[standard]
 Pillow
 python-magic
 pytz
 exponent-server-sdk
-mysql-connector-python
+asyncmy
 boto3

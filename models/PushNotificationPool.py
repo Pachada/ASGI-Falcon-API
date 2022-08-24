@@ -1,10 +1,10 @@
-from core.Model import *
+from core.Async_Model import *
 from models.User import User
 from models.PushNotificationTemplate import PushNotificationTemplate
 from models.Status import Status
 
 
-class PushNotificationPool(Base, Model):
+class PushNotificationPool(Base, AsyncModel):
     __tablename__ = "push_notification_pool"
     
 

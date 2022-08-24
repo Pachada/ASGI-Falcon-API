@@ -1,10 +1,10 @@
-from core.Model import *
+from core.Async_Model import *
 from models.EmailTemplate import EmailTemplate
 from models.Status import Status
 from models.User import User
 
 
-class EmailPool(Base, Model):
+class EmailPool(Base, AsyncModel):
     __tablename__ = "email_pool"
     
 

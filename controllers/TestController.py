@@ -13,13 +13,24 @@ from core.Controller import (
     asyncio
 )
 from models.AppVersion import AppVersion
+from models.User import User, get_db_session
 
 clients = set()
 class TestController(Controller):
     app_clients = defaultdict(list)
 
-    async def on_get(self, req: Request, resp: Response):
-        pass
+    async def on_get(self, req: Request, resp: Response, id: int = None):
+        async with get_db_session() as session:
+            if id:
+                row: User = await User.get(session, id, get_relationtships=User.person)
+                if not row:
+                    self.response(resp, 404)
+                    return
+            else:
+                row = await User.get_all(session, orderBy=User.id.desc())
+
+            self.response(resp, 200, Utils.serialize_model(row))
+
 
     async def on_post(self, req: Request, resp: Response):
         pass

@@ -1,10 +1,10 @@
-from core.Model import *
+from core.Async_Model import *
 from models.SmsTemplate import SmsTemplate
 from models.Status import Status
 from models.User import User
 
 
-class SmsPool(Base, Model):
+class SmsPool(Base, AsyncModel):
     __tablename__ = "sms_pool"
     
 

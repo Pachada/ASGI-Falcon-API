@@ -1,7 +1,7 @@
-from core.Model import *
+from core.Async_Model import *
 
 
-class SmsTemplate(Base, Model):
+class SmsTemplate(Base, AsyncModel):
     # Templates                  #Data
     OTP = 1  # {{otp}}
 

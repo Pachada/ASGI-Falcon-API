@@ -1,8 +1,8 @@
-from core.Model import *
+from core.Async_Model import *
 from models.PushNotificationCatalogue import PushNotificationCatalogue
 
 
-class PushNotificationTemplate(Base, Model):
+class PushNotificationTemplate(Base, AsyncModel):
     # Templates                                  #Data
 
     __tablename__ = "push_notification_template"

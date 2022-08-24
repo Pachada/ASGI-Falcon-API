@@ -1,7 +1,7 @@
-from core.Model import *
+from core.Async_Model import *
 
 
-class File(Base, Model):
+class File(Base, AsyncModel):
     __tablename__ = "file"
     
 

@@ -1,7 +1,7 @@
-from core.Model import *
+from core.Async_Model import *
 
 
-class AppVersion(Base, Model):
+class AppVersion(Base, AsyncModel):
     __tablename__ = "app_version"
     
 

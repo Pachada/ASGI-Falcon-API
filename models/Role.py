@@ -1,7 +1,7 @@
-from core.Model import *
+from core.Async_Model import *
 
 
-class Role(Base, Model):
+class Role(Base, AsyncModel):
     # Roles
     ROOT = 1
     USER = 2

@@ -1,7 +1,7 @@
-from core.Model import *
+from core.Async_Model import *
 
 
-class EmailTemplate(Base, Model):
+class EmailTemplate(Base, AsyncModel):
     # Templates                  #Data
     PASSWORD_RECOVERY = 1  # {{otp}}
     CONFIRM_EMAIL = 2  # {{token}}

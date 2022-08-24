@@ -1,4 +1,4 @@
-from models.Status import Status, and_, datetime, Model, Utils
+from models.Status import Status, and_, datetime, AsyncModel, Utils
 
 class NotificationCronsUtils:
 
@@ -12,7 +12,7 @@ class NotificationCronsUtils:
         """Start the sending procces"""
         self.main(limit)
 
-    def get_rows_to_send(self, model: Model, query_limit):
+    def get_rows_to_send(self, model, query_limit):
         return model.get_all(
             and_(
                 model.status_id.in_([Status.PENDING, Status.ERROR]),
@@ -27,7 +27,7 @@ class NotificationCronsUtils:
             if not row.save():
                 data.remove(row)
     
-    def row_with_errors(self, row: Model):
+    def row_with_errors(self, row):
         row.send_attemps += 1
         if row.send_attemps >= self.max_send_attempts:
             row.delete()

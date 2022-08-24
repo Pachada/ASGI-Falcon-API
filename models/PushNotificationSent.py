@@ -1,10 +1,10 @@
-from core.Model import *
+from core.Async_Model import *
 from models.PushNotificationTemplate import PushNotificationTemplate
 from models.User import User
 from models.Device import Device
 
 
-class PushNotificationSent(Base, Model):
+class PushNotificationSent(Base, AsyncModel):
     __tablename__ = "push_notification_sent"
     
 

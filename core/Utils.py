@@ -200,7 +200,7 @@ class Utils:
             attributes_blacklist = getattr(object, 'attributes_blacklist', set())
         formatters = object.get_formatters()
         for key in object.__table__.columns.keys():
-            if key == "password" or key in attributes_blacklist:
+            if key in {"password", "salt"} or key in attributes_blacklist:
                 continue
             value = getattr(object, str(key))
             if key in formatters:

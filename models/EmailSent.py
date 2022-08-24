@@ -1,9 +1,9 @@
-from core.Model import *
+from core.Async_Model import *
 from models.EmailTemplate import EmailTemplate
 from models.User import User
 
 
-class EmailSent(Base, Model):
+class EmailSent(Base, AsyncModel):
     __tablename__ = "email_sent"
     
 

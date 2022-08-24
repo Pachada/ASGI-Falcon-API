@@ -1,9 +1,9 @@
-from core.Model import *
+from core.Async_Model import *
 from models.User import User
 from models.AppVersion import AppVersion
 
 
-class Device(Base, Model):
+class Device(Base, AsyncModel):
     __tablename__ = "device"
     
 
@@ -19,4 +19,4 @@ class Device(Base, Model):
     user = relationship(User)
     app_version = relationship(AppVersion)
 
-    formatters = {"created": Utils.date_formatter, "updated": Utils.date_formatter}
+    blacklist = {"user"}

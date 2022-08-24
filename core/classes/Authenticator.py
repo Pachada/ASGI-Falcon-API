@@ -1,9 +1,9 @@
 from falcon.asgi import Response, Request
 from models.Session import Session
-from models.User import User
-from models.Device import Device
+from models.User import User, DB_Session
+from models.Device import Device, get_db_session
 from core.Utils import Utils, logger, datetime
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 import json
 
 
@@ -94,33 +94,34 @@ class Authenticator(object):
 
     async def process_resource(self, req: Request, resp: Response, resource, params):
         if req.auth:
-            session = Session.get(Session.token == req.auth)
-            if not session:
-                logger.warning("No session")
-                resource.response(resp, 401, error="Unauthorized")
-                resp.complete = True
-                return
+            async with get_db_session() as db_session:
+                session = await Session.get(db_session, Session.token == req.auth)
+                if not session:
+                    logger.warning("No session")
+                    resource.response(resp, 401, error="Unauthorized")
+                    resp.complete = True
+                    return
 
-            if not Utils.validate_expiration_time(session.updated, "session"):
-                logger.warning("Session expired")
-                self.logout(session)
-                resource.response(resp, 401, message="Session expired")
-                resp.complete = True
-                return
+                if not Utils.validate_expiration_time(session.updated, "session"):
+                    logger.warning("Session expired")
+                    await self.logout(session)
+                    resource.response(resp, 401, message="Session expired")
+                    resp.complete = True
+                    return
 
-            role_name = session.user.role.name
-            method = req.method
-            resource_name = type(resource).__name__
-            if not self.__has_privileges(role_name, method, resource_name):
-                logger.warning("No privileges")
-                resource.response(resp, 401, message="Unauthorized")
-                resp.complete = True
-                return
+                role_name = session.user.role.name
+                method = req.method
+                resource_name = type(resource).__name__
+                if not self.__has_privileges(role_name, method, resource_name):
+                    logger.warning("No privileges")
+                    resource.response(resp, 401, message="Unauthorized")
+                    resp.complete = True
+                    return
 
-            # update the session.updated to now
-            """session.updated = datetime.utcnow()
-            session.save()"""
-            req.context.session = session
+                # update the session.updated to now
+                """session.updated = datetime.utcnow()
+                session.save()"""
+                req.context.session = session
         
         # If the route or the route with out the id is in exceptions, session is None
         elif req.path in self.exceptions or "/".join(req.path.split('/')[:-1]) in self.exceptions:
@@ -167,11 +168,11 @@ class Authenticator(object):
         """
 
     @staticmethod
-    def login(username, password, device_uuid="unknown"):
-        if user := User.get(User.username == username):
+    async def login(db_session: DB_Session, username, password, device_uuid="unknown"):
+        if user := await User.get(db_session, or_(User.username == username, User.email == username)):
             password = Utils.get_hashed_string(password + user.salt)
             if password == user.password:
-                if session := Authenticator.start_user_session(user, device_uuid):
+                if session := await Authenticator.start_user_session(db_session, user, device_uuid):
                     return session
         return None
 
@@ -180,27 +181,26 @@ class Authenticator(object):
         return Authenticator.start_user_session(user, device_uuid)
 
     @staticmethod
-    def start_user_session(user: User, device_uuid):
-        device = Device.get(and_(Device.user_id == user.id, Device.uuid == device_uuid))
+    async def start_user_session(db_session: DB_Session, user: User, device_uuid):
+        device = await Device.get(db_session, and_(Device.user_id == user.id, Device.uuid == device_uuid))
 
         if device is None:
             device = Device(
                 uuid=device_uuid,
                 user_id=user.id,
             )
-            device.save()
+            await device.save(db_session)
 
-        session = Session.get(
-            and_(Session.user_id == user.id, Session.device_id == device.id)
-        )
+        session = await Session.get(db_session, and_(Session.user_id == user.id, Session.device_id == device.id))
 
-        if session is None:
+        if not session:
             session = Session(user_id=user.id, device_id=device.id)
 
         session.token = Utils.generate_token()
-        session.save()
-        return session
+        await session.save(db_session)
+
+        return await Session.get(db_session, Session.id == session.id)
 
     @staticmethod
-    def logout(session: Session):
-        return session.soft_delete()
+    async def logout(db_session: DB_Session, session: Session):
+        return await session.soft_delete(db_session)

@@ -1,11 +1,11 @@
-from core.Model import *
+from core.Async_Model import *
 from core.Utils import Utils
 from models.NewsType import NewsType
 from models.User import User
 from models.File import File
 
 
-class News(Base, Model):
+class News(Base, AsyncModel):
     __tablename__ = "news"
     
 

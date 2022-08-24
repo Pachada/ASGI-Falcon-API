@@ -5,7 +5,7 @@ from falcon import code_to_http_status, WebSocketDisconnected, create_task
 from datetime import datetime, timedelta, time
 import json
 from core.Utils import Utils, logger
-from core.Model import Model
+from core.Async_Model import *
 
 
 class Controller:
@@ -35,7 +35,7 @@ class Controller:
             data["error_code"] = error_code
         resp.text = json.dumps(data, ensure_ascii=False)
 
-    def set_values(self, row: Model, data: dict):
+    def set_values(self, row: AsyncModel, data: dict):
         try:
             for col in row.__table__.columns.keys():
                 if col in data:
@@ -64,23 +64,23 @@ class Controller:
 
         return data
 
-    def get_model_object(self, resp: Response, model: Model, id: int = None):
+    async def get_model_object(self, db_session: DB_Session, resp: Response, model: AsyncModel, id: int = None):
         if not id:
             self.response(resp, 405)
             return
 
-        row = model.get(id)
+        row = await model.get(db_session, id)
         if not row:
             self.response(resp, 404, error=self.ID_NOT_FOUND)
             return
 
         return row
 
-    def generic_on_get(
+    async def generic_on_get(
         self,
         req: Request,
         resp: Response,
-        model: Model,
+        model: AsyncModel,
         id: int = None,
         filters=None,
         join=None,
@@ -88,26 +88,21 @@ class Controller:
         recursive=False,
         recursiveLimit=2,
     ):
-        if id:
-            row = self.get_model_object(resp, model, id)
-            if not row:
-                return
-        else:
-            row = model.get_all(filters, join=join, orderBy=order_by)
+        async with get_db_session() as db_session:
+            if id:
+                row = await self.get_model_object(db_session, resp, model, id)
+                if not row:
+                    return
+            else:
+                row = await model.get_all(db_session, filters, join=join, orderBy=order_by)
 
-        self.response(
-            resp,
-            200,
-            Utils.serialize_model(
-                row, recursive=recursive, recursiveLimit=recursiveLimit
-            ),
-        )
+            self.response(resp, 200, Utils.serialize_model(row, recursive=recursive, recursiveLimit=recursiveLimit),)
 
     def generic_on_post(
         self,
         req: Request,
         resp: Response,
-        model: Model,
+        model: AsyncModel,
         id: int = None,
         data=None,
         extra_data: dict = None
@@ -135,7 +130,7 @@ class Controller:
         self,
         req: Request,
         resp: Response,
-        model: Model,
+        model: AsyncModel,
         id: int = None,
         data=None,
         extra_data: dict = None
@@ -163,7 +158,7 @@ class Controller:
         self,
         req: Request,
         resp: Response,
-        model: Model,
+        model: AsyncModel,
         id: int = None,
         soft_delete: bool = True,
         delete_file: bool = False,
@@ -173,7 +168,7 @@ class Controller:
             self.response(resp, 405)
             return
 
-        row: Model = self.get_model_object(resp, model, id)
+        row: AsyncModel = self.get_model_object(resp, model, id)
         if not row:
             return
 

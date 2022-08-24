@@ -1,9 +1,9 @@
-from core.Model import *
+from core.Async_Model import *
 from models.SmsTemplate import SmsTemplate
 from models.User import User
 
 
-class SmsSent(Base, Model):
+class SmsSent(Base, AsyncModel):
     __tablename__ = "sms_sent"
     
 

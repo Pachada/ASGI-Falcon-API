@@ -1,7 +1,7 @@
-from core.Model import *
+from core.Async_Model import *
 
 
-class Person(Base, Model):
+class Person(Base, AsyncModel):
     __tablename__ = "person"
     
 
@@ -12,3 +12,6 @@ class Person(Base, Model):
     created = Column(DateTime, default=Utils.time())
     updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
     enable = Column(Boolean, default=True)
+
+    def __repr__(self) -> str:
+        return f"{self.first_name} {self.last_name}"

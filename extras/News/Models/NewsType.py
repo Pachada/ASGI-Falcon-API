@@ -1,8 +1,8 @@
-from core.Model import *
+from core.Async_Model import *
 from core.Utils import Utils
 
 
-class NewsType(Base, Model):
+class NewsType(Base, AsyncModel):
     # New Types
     RECORDATORIO = 1
     AVISO = 2

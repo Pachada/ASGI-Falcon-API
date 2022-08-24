@@ -1,7 +1,7 @@
-from core.Model import *
+from core.Async_Model import *
 
 
-class Status(Base, Model):
+class Status(Base, AsyncModel):
     # STATUS FOR PUSH NOTIFICATIONS AND EMAILS
     PENDING = 1
     PROCESSING = 2

@@ -1,10 +1,10 @@
-from core.Model import *
+from core.Async_Model import *
 from models.User import User
 from models.File import File
 from models.Status import Status
 
 
-class UserVerification(Base, Model):
+class UserVerification(Base, AsyncModel):
     __tablename__ = "user_verification"
 
     user_id = Column(BigInteger, ForeignKey(User.id), primary_key=True, nullable=False)

@@ -13,38 +13,44 @@ from sqlalchemy import (
     Boolean,
     func,
     distinct,
-    or_, 
-    and_
+    or_,
+    and_,
+    case
 )
-from sqlalchemy.orm import relationship, exc
+from sqlalchemy.orm import relationship, exc, selectinload, lazyload, joinedload
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql
 from sqlalchemy.orm.util import was_deleted, has_identity
 from datetime import datetime, date
-from core.database import Base, engine, db_session as session
+from core.database import Base, engine, get_db_session
 from core.Utils import Utils, logger
+from sqlalchemy import update
 from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession as DB_Session
+from sqlalchemy.sql.expression import Select
 
 
-class Model:
+class AsyncModel:
+
+    __mapper_args__ = {"eager_defaults": True}
 
     """
     The Model Class has methods to process queries in database in a easily way like
     get one, get all, delete and save. The Model class inherits new models.
     """
 
-    def refresh_object(self, attribute_names=None):
-        session.refresh(self, attribute_names)
+    def refresh_object(self, db_session: DB_Session, attribute_names=None):
+        db_session.refresh(self, attribute_names)
 
     def get_formatters(self):
         return {attribute.name: Utils.date_formatter for attribute in self.__table__.columns if attribute.type.python_type in {datetime, date}}
 
-    def exists_in_database(self):
+    async def exists_in_database(self, db_session: DB_Session):
         """
         Return True if the object exists in database, False otherwise.
         """
         try:
-            row = self.get(self.id)
+            row = await self.get(db_session, self.id)
             return row and not was_deleted(self) and has_identity(self)
         except exc.ObjectDeletedError:
             return False
@@ -74,7 +80,7 @@ class Model:
                 file.delete_file_from_local()
 
     @classmethod
-    def get(cls, value, filter=None, deleted=False, join=None, order_by=None, with_for_update=False):
+    async def get(cls, db_session: DB_Session, value, get_relationtships=True, deleted=False, join=None, order_by=None):
         """
         The get() method can process a query with some parameters to get a response.
 
@@ -97,7 +103,9 @@ class Model:
         ----------
         `object`
             An object with query results."""
-        query = session.query(cls)
+        query: Select = select(cls)
+        if get_relationtships:
+            query = query.options(selectinload('*'))
         if join:
             if isinstance(join, list):
                 for model in join:
@@ -105,20 +113,19 @@ class Model:
             else:
                 query = query.join(join)
         if not deleted and "enable" in cls.__table__.columns.keys():
-            query = query.filter_by(enable=1)
-        if filter is not None:
-            query = query.filter(filter)
+            query = query.where(cls.enable == 1)
         if isinstance(value, int):
-            query = query.filter_by(id=value)
+            query = query.where(cls.id == value)
         else:
-            query = query.filter(value)
+            query = query.where(value)
         if order_by is not None:
             query = query.order_by(order_by)
 
-        return query.with_for_update().first() if with_for_update else query.first()
+        result = await db_session.execute(query)
+        return result.scalars().first()
 
     @classmethod
-    def get_all(cls, filter=None, limit=None, offset=None, orderBy=None, deleted=False, join=None, left_join=False):
+    async def get_all(cls, session: DB_Session, get_relationtships=True, limit=None, orderBy=None, deleted=False, join=None, left_join=False):
         """
         The get_all() method process a query and returns all found values.
 
@@ -144,7 +151,9 @@ class Model:
         `object`
             An object with all results.
         """
-        query = session.query(cls)
+        query: Select = select(cls)
+        if get_relationtships:
+            query = query.options(selectinload('*'))
         if join:
             if isinstance(join, list):
                 for model in join:
@@ -152,9 +161,7 @@ class Model:
             else:
                 query = query.join(join, isouter=left_join)
         if not deleted and "enable" in cls.__table__.columns.keys():
-            query = query.filter(cls.enable == 1)
-        if filter is not None:
-            query = query.filter(filter)
+            query = query.where(cls.enable == 1)
         if orderBy is not None:
             if isinstance(orderBy, list):
                 for ord in orderBy:
@@ -163,22 +170,22 @@ class Model:
                 query = query.order_by(orderBy)
         if limit is not None:
             query = query.limit(limit)
-        if offset is not None:
-            query = query.offset(offset)
-        return query.all()
 
-    def save(self):
+        result = await session.execute(query)
+        return result.scalars().all()
+
+    async def save(self, session: DB_Session):
         try:
             session.add(self)
-            session.commit()
+            await session.commit()
             return True
         except Exception as exc:
-            session.rollback()
             print("[ERROR-SAVING]")
             print(exc)
+            await session.rollback()
             return False
 
-    def soft_delete(self):
+    async def soft_delete(self, session: DB_Session):
         """
         The soft_delete() method changes the status of a row in the enable column into *deleted* by changing its
         value to 0, this indicate that the row has not been deteled at all but in next queries this row will not be
@@ -191,13 +198,13 @@ class Model:
         """
         try:
             self.enable = 0
-            return self.save()
+            return await self.save(session)
         except Exception as exc:
             logger.error("[ERROR-SOFT-DELETING]")
             logger.error(exc)
             return False
 
-    def delete(self):
+    async def delete(self, session: DB_Session):
         """
         The delete() method deletes a row from database, if something went wrong
         delete() can roll back changes made too.
@@ -209,20 +216,20 @@ class Model:
         """
         try:
             session.delete(self)
-            session.commit()
+            await session.commit()
             return True
         except Exception as exc:
-            session.rollback()
+            await session.rollback()
             logger.error("[ERROR-DELETING]")
             logger.error(exc)
             return False
 
     @classmethod
-    def delete_multiple(cls, filter):
+    async def delete_multiple(cls, session: DB_Session, filter):
         try:
             query = cls.__table__.delete().where(filter)
             session.execute(query)
-            session.commit()
+            await session.commit()
             return True
         except Exception as exc:
             logger.error("[ERROR-DELETING-MULTIPLE]")
@@ -230,7 +237,7 @@ class Model:
             return False
 
     @classmethod
-    def count(cls, filter=None, deleted=False, join=None):
+    async def count(cls, session: DB_Session, filter=None, deleted=False, join=None):
         """
         The count() method counts all rows depending its parameters wich can be filtered,
         deleted or make a join.
@@ -250,20 +257,25 @@ class Model:
             An object with count() results.
         """
         try:
-            query = session.query(cls)
+            query: Select = select(cls)
             if join:
-                for model in join:
-                    query = query.join(model)
+                if isinstance(join, list):
+                    for model in join:
+                        query = query.join(model)
+                else:
+                    query = query.join(join)
             if not deleted and "enable" in cls.__table__.columns.keys():
-                query = query.filter(cls.enable == 1)
-            return query.filter(filter).count() if filter is not None else query.count()
+                query = query.where(cls.enable == 1)
+
+            result = await session.execute(query)
+            return result.scalars().count()
         except Exception as exc:
             logger.error("[ERROR-COUNTING]")
             logger.error(exc)
             return False
 
     @classmethod
-    def sum(cls, field, filter=None):
+    async def sum(cls, session: DB_Session, field, filter=None):
         """
         The sum() method sums all rows of a field, if there is not result then returns 0.
 
@@ -292,7 +304,7 @@ class Model:
             return False
 
     @classmethod
-    def max(cls, field, filter=None):
+    async def max(cls, session: DB_Session, field, filter=None):
         """
         The max() method process a query and returns the max value of a field.
 
@@ -322,7 +334,7 @@ class Model:
             return False
 
     @classmethod
-    def min(cls, field, filter=None):
+    async def min(cls, session: DB_Session, field, filter=None):
         """
         The min() method process a query and returns the min value of a field.
 
@@ -352,7 +364,7 @@ class Model:
             return False
 
     @classmethod
-    def distinct(cls, field, filter=None, deleted=False):
+    async def distinct(cls, session: DB_Session, field, filter=None, deleted=False):
         try:
             if field and hasattr(cls, field):
                 field_ = getattr(cls, field, None)
@@ -368,7 +380,7 @@ class Model:
             return False
 
     @staticmethod
-    def save_all(instances):
+    async def save_all(session: DB_Session, instances):
         """
         The save_all() method adds more than one objects of Models and saves them to the database,
         if something went wrong save_all() can roll back changes made too.
@@ -386,9 +398,9 @@ class Model:
         try:
             if isinstance(instances, list):
                 session.add_all(instances)
-                session.commit()
+                await session.commit()
             else:
-                instances.save()
+                await instances.save()
             return True
         except Exception as exc:
             session.rollback()
@@ -397,7 +409,7 @@ class Model:
             return False
 
     @staticmethod
-    def remove(instance):
+    async def remove(session: DB_Session, instance):
         """
         The remove() method removes an instance.
 

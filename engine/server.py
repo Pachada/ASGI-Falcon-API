@@ -6,12 +6,13 @@ from core.classes.SQLAlchemySessionManager import SQLAlchemySessionManager
 
 authorization_middleware = Authenticator()
 CORS_middleware = CORS_Handler()
-sqlalchemy_session_manager = SQLAlchemySessionManager()
+#sqlalchemy_session_manager = SQLAlchemySessionManager()
+#db_session_manager = DBSessionManager()
 
 # Create server
 def create_server():
 
-    server = App(middleware=[CORS_middleware, authorization_middleware, sqlalchemy_session_manager])
+    server = App(middleware=[CORS_middleware, authorization_middleware])
     # server = App())
 
     # Load routes

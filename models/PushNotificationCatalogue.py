@@ -1,7 +1,7 @@
-from core.Model import *
+from core.Async_Model import *
 
 
-class PushNotificationCatalogue(Base, Model):
+class PushNotificationCatalogue(Base, AsyncModel):
     __tablename__ = "push_notification_catalogue"
     
 

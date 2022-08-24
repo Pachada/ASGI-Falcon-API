@@ -1,11 +1,13 @@
-from core.Model import *
+from functools import cached_property
+from core.Async_Model import *
 from models.Role import Role
 from models.Person import Person
 
 
-class User(Base, Model):
+class User(Base, AsyncModel):
     __tablename__ = "user"
-    
+
+    age = 0
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     username = Column(String(100), nullable=False)
@@ -15,8 +17,8 @@ class User(Base, Model):
     phone = Column(String(15), default=None)
     role_id = Column(BigInteger, ForeignKey(Role.id), default=Role.USER)
     person_id = Column(BigInteger, ForeignKey(Person.id))
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, server_default=func.now())
+    updated = Column(DateTime, server_default=func.now(), on_update=func.now())
     enable = Column(Boolean, default=True)
 
     # Verifications
@@ -27,14 +29,27 @@ class User(Base, Model):
     role = relationship(Role)
     person = relationship(Person)
 
+    def __repr__(self) -> str:
+        return f"{self.username}, {self.email}"
+    
+    @cached_property
+    def age(self):
+        return self.calc_age() if self.person.birthday else 0
+    
+    def calc_age(self) -> int:
+        today = date.today()
+        birthdate = self.person.birthday
+        return today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
+
     @staticmethod
-    def check_if_user_exists(username, email):
+    async def check_if_user_exists(db_session: DB_Session, username, email):
         if username:
-            if check_username := User.get(User.username == username):
+            if check_username := await User.get(db_session, User.username == username):
                 return True, "This username already exists"
 
         if email:
-            if check_email := User.get(User.email == email):
+            if check_email := await User.get(db_session, User.email == email):
                 return True, "This email already has an account"
 
         return False, ""
+        
