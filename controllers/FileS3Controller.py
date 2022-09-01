@@ -1,6 +1,7 @@
 from core.classes.FileUtils import (
     FileController,
     FileAbstract,
+    FileTypes,
     Utils,
     File,
     Request,
@@ -15,7 +16,9 @@ class FileS3Controller(FileController, FileAbstract):
     def __init__(self):
         super().__init__()
         #  AWS S3 info
-        self.bucket = self.config.get("S3", "bucket_name")
+        self.private_bucket = self.config.get("S3", "private_bucket_name")
+        self.public_bucket = self.config.get("S3", "public_bucket_name")
+        self.video_bucket = self.config.get("S3", "video_bucket_name")
         self.region = self.config.get("S3", "region")
         self.profile = self.config.get("S3", "profile_name")
 
@@ -24,7 +27,7 @@ class FileS3Controller(FileController, FileAbstract):
             self.response(resp, 405)
             return
 
-        file, file_object = FileManager.get_file(self.bucket, id, self.region)
+        file, file_object = FileManager.get_file(self.private_bucket, id, self.region)
 
         if not file:
             self.response(resp, 404, error="No file with that id")
@@ -47,7 +50,7 @@ class FileS3Controller(FileController, FileAbstract):
             self.response(resp, 405)
             return
 
-        file, deleted = FileManager.delete_file(self.bucket, id, self.region)
+        file, deleted = FileManager.delete_file(self.private_bucket, id, self.region)
         if not file:
             self.response(resp, 404, error=self.ID_NOT_FOUND)
             return
@@ -73,7 +76,7 @@ class FileS3Controller(FileController, FileAbstract):
             self.response(resp, 405)
             return
 
-        file, file_object = FileManager.get_file(self.bucket, id, self.region)
+        file, file_object = FileManager.get_file(self.private_bucket, id, self.region)
 
         if not file:
             self.response(resp, 404, error="No file with that id")
@@ -89,9 +92,7 @@ class FileS3Controller(FileController, FileAbstract):
 
     # -------------------------------- Utils --------------------------------
 
-    def create_file(
-        self, file_name, file_content, file_type, is_thumbnail=0, encode_to_base64=False
-    ):
+    def create_file(self, file_name, file_content, file_type, is_thumbnail=0, encode_to_base64=False, public=False):
         file_content = super().format_file_content(file_content)
 
         hash_string = file_name + file_type + str(time.time()) + str(file_content)[:25]
@@ -100,12 +101,23 @@ class FileS3Controller(FileController, FileAbstract):
         if encode_to_base64:
             file_content = super().encode_to_base64(file_content)
 
+        bucket = self.private_bucket
+        is_video: bool = file_type == FileTypes.VIDEO.value
+        if is_video:
+            bucket = self.video_bucket
+        elif public:
+            bucket = self.public_bucket
+
+        # https://inmobiliaria-files.s3.amazonaws.com/6d9860c300a8744cbbf3f5.png
+        url = f"https://{bucket}.s3.amazonaws.com/{file_hash}" if public or is_video else None
+
         return FileManager.put_file(
-            self.bucket,
+            bucket,
             file_content,
             file_hash,
             file_type=file_type,
             file_name=file_name,
             region=self.region,
             is_thumbnail=is_thumbnail,
+            url=url
         )

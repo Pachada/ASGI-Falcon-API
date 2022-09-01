@@ -138,6 +138,7 @@ class FileLocalController(FileController, FileAbstract):
         file_type,
         is_thumbnail=0,
         encode_to_base64=True,
+        public=None
     ):
         random_number = randint(0, 100000)
         filename = (

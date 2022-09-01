@@ -11,6 +11,16 @@ import base64
 from falcon.media.multipart import BodyPart
 import magic
 from abc import ABC, abstractmethod
+from enum import Enum
+
+
+class FileTypes(Enum):
+    PNG = "image/png"
+    JPG = "image/jpg"
+    JPEG = "image/jpeg"
+    PDF = "application/pdf"
+    AUDIO = "audio/mpeg"
+    VIDEO = "video/mp4"
 
 
 class FileSizeGraterThanAllowed(Exception):
@@ -52,7 +62,7 @@ class FileController(Controller):
     """
 
     CHUNK_SIZE = 8192
-    IMAGE_EXTENSIONS = {"image/jpeg", "image/png", "image/jpg"}
+    IMAGE_EXTENSIONS = {FileTypes.JPEG.value, FileTypes.PNG.value, FileTypes.JPG.value}
 
     def __init__(self):
         self.config = configparser.ConfigParser()
@@ -65,9 +75,7 @@ class FileController(Controller):
     def compress_image(self, image_data):
         with Image.open(io.BytesIO(image_data)) as image_data_content:
             b = io.BytesIO()
-            image_data_content.save(
-                b, image_data_content.format, optimize=True, quality=65
-            )
+            image_data_content.save(b, image_data_content.format, optimize=True, quality=65)
         b.seek(0)
         return b
 
@@ -85,7 +93,7 @@ class FileController(Controller):
         # if is an images,  compress it and return the content
         if part.content_type in self.IMAGE_EXTENSIONS:
             return self.compress_image(b"".join(data))
-        
+
         return b"".join(data)
 
     async def on_post(self, req: Request, resp: Response, id: int = None):
@@ -94,6 +102,7 @@ class FileController(Controller):
             return
 
         make_thumbnail = self.check_if_make_thumbnail(req)
+        public_file = self.check_if_public_file(req)
         form = req.get_media()
         for part in form:
             part: BodyPart = part
@@ -155,16 +164,17 @@ class FileController(Controller):
     def check_if_make_thumbnail(self, req: Request):
         return req.params.get("thumbnail") == "True"
 
-    def procces_file(
-        self, filename, data, content_type, encode_to_base64=False, make_thumbnail=False
-    ):
+    def check_if_public_file(self, req: Request):
+        return req.params.get("public") == "True"
 
-        file = (
-            self.create_file(  # the create_file method is implemented by the subclasses
+    def procces_file(self, filename, data, content_type, encode_to_base64=False, make_thumbnail=False, public=False):
+
+        file = (self.create_file(  # the create_file method is implemented by the subclasses
                 filename,
                 data,
                 content_type,
                 encode_to_base64=encode_to_base64,
+                public=public
             )
         )
 
@@ -172,20 +182,18 @@ class FileController(Controller):
             return {"Filename": filename, "Error": self.PROBLEM_SAVING_TO_DB}, None, 500
 
         thumbnail = None
-        if make_thumbnail and (
-            content_type in self.IMAGE_EXTENSIONS 
-        ):
+        if make_thumbnail and content_type in self.IMAGE_EXTENSIONS:
             thumbnail = self.create_thumbnail(
                 data,
                 filename,
                 content_type,
                 encode_to_base64,
             )
-            thumbnail = Utils.serialize_model(thumbnail) if thumbnail else {"Filename_thumbnail": filename, "error": self.PROBLEM_SAVING_TO_DB,}
+            thumbnail = Utils.serialize_model(thumbnail) if thumbnail else {"Filename_thumbnail": filename, "error": self.PROBLEM_SAVING_TO_DB, }
 
         return Utils.serialize_model(file), thumbnail, 201
 
-    def create_thumbnail(self, image_data, filename, content_type, encode_to_base64):
+    def create_thumbnail(self, image_data, filename, content_type, encode_to_base64, public=False):
         thumbnail_content = self.create_thumbnail_image(image_data)
         filename = filename.split(".")
         thumbnail_name = (
@@ -200,13 +208,14 @@ class FileController(Controller):
                 content_type,
                 is_thumbnail=1,
                 encode_to_base64=encode_to_base64,
+                public=public
             )
         )
 
     def create_thumbnail_image(self, image_data):
         if not isinstance(image_data, io.BytesIO):
             image_data = io.BytesIO(image_data)
-            
+
         with Image.open(image_data) as image_data_content:
             image_data_content.thumbnail(size=(640, 640))
             b = io.BytesIO()
