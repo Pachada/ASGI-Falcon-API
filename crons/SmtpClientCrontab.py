@@ -1,9 +1,10 @@
-import smtplib, ssl
+import smtplib
+import ssl
 import configparser
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from models.EmailSent import EmailSent
-from models.EmailPool import EmailPool, User
+from models.EmailSent import EmailSent, or_
+from models.EmailPool import EmailPool, User, Status
 from core.classes.NotificationCronsUtils import NotificationCronsUtils, Utils
 
 
@@ -11,6 +12,7 @@ class SmtpClientCrontab(NotificationCronsUtils):
 
     __instance = None
     max_send_attempts = 3
+    emails_sended = []
 
     @staticmethod
     def get_instance():
@@ -29,7 +31,7 @@ class SmtpClientCrontab(NotificationCronsUtils):
         self.server = self.config.get("SMTP", "server")
         self.fromemail = self.config.get("SMTP", "fromemail")
 
-    def send_emails(self, query_limit: int):
+    async def send_emails(self, query_limit: int):
         emails_to_send = []
         try:
             # Start the smtp server with the credential in config.ini
@@ -43,20 +45,25 @@ class SmtpClientCrontab(NotificationCronsUtils):
                     self.nothing_to_send()
                     return
 
-                self.put_rows_in_proccesing_status(emails_to_send)
+                await self.put_rows_in_proccesing_status(emails_to_send)
 
-                errors = sum(
-                    self.__send_email(server, email) for email in emails_to_send
-                )
+                errors = sum(self.__send_email(server, email) for email in emails_to_send)
+                # Guardamos los emails
+                await EmailPool.save_all(emails_to_send)
+                # Guardamos los emails enviados
+                await EmailSent.save_all(self.emails_sended)
+                # Borramos los enviados y que el su send_attemps sea mayor a 3
+                await self.__delete_sended_and_with_errors()
 
                 self.show_results(len(emails_to_send), errors)
-                
+
         except Exception as exc:
             print(exc)
             print("Error sending emails")
             if emails_to_send:
                 for email in emails_to_send:
                     self.row_with_errors(email)
+                await EmailPool.save_all(emails_to_send)
 
     def __create_message(self, email_pool: EmailPool):
         msg = MIMEMultipart()
@@ -65,17 +72,17 @@ class SmtpClientCrontab(NotificationCronsUtils):
         return msg.as_string()
 
     def __save_to_sended(self, msg: str, user_id: int, template_id: int):
-
         email = EmailSent(
             user_id=user_id,
             template_id=template_id,
             content=msg
         )
-        if not email.save():
-            print("[ERROR SAVING SENDED EMAIL]")
+        # Lo agregamos a los emails_sended para guardarlo posteriormente
+        self.emails_sended.append(email)
 
     def __send_email(self, server: smtplib.SMTP, email_pool: EmailPool):
-        """Send the email
+        """
+        Send the email
         Returs 1 if there was an error, 0 otherwise
         """
         user: User = email_pool.user
@@ -92,15 +99,18 @@ class SmtpClientCrontab(NotificationCronsUtils):
             self.row_with_errors(email_pool)
             return 1
 
-        # The email was sended, save it to the sended records and delete the EmailPool object
-        self.__save_to_sended(
-            email_pool.content, user.id, email_pool.template_id
-        )
-        email_pool.delete()
+        # The email was sended, save it to the sended records
+        self.__save_to_sended(email_pool.content, user.id, email_pool.template_id)
+
+        # Mark the email_pool as sended
+        email_pool.status_id = Status.SEND
 
         return 0
 
-    def main(self, limit = 5000):
+    async def __delete_sended_and_with_errors(self):
+        await EmailPool.delete_multiple(or_(EmailPool.status_id == Status.SEND, EmailPool.send_attemps >= self.max_send_attempts))
+
+    def main(self, limit=5000):
         self.send_emails(limit)
 
 

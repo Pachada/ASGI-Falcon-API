@@ -14,14 +14,10 @@ class SmtpClient:
 
         if isinstance(user, list):
             for item in user:
-                SmtpClient.__save_to_pool(
-                    template, content, send_time, item
-                )
+                SmtpClient.__save_to_pool(template, content, send_time, item)
             return
 
-        SmtpClient.__save_to_pool(
-                    template, content, send_time, user
-                )
+        SmtpClient.__save_to_pool(template, content, send_time, user)
 
         if send_now and send_time <= datetime.utcnow():
             client = SmtpClientCrontab.get_instance() 
