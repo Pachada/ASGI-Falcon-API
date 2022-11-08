@@ -282,7 +282,7 @@ class Utils:
         """
         Validates that the email address is a valid one using regex
         """
-        regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+        regex = r"^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$"
         return bool(re.search(regex, email))
     
     @staticmethod
