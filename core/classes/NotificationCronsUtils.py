@@ -9,9 +9,9 @@ class NotificationCronsUtils:
         # Implemented in subclass
         raise NotImplementedError
 
-    def procces_pool(self, limit: int = 10):
+    async def procces_pool(self, limit: int = 10):
         """Start the sending procces"""
-        self.main(limit)
+        await self.main(limit)
 
     async def get_rows_to_send(self, model: AsyncModel, query_limit):
         return await model.get_all(

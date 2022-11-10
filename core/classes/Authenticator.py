@@ -104,7 +104,7 @@ class Authenticator(object):
 
                 if not Utils.validate_expiration_time(session.updated, "session"):
                     logger.warning("Session expired")
-                    await self.logout(session)
+                    await self.logout(db_session, session)
                     resource.response(resp, 401, message="Session expired")
                     resp.complete = True
                     return
@@ -119,8 +119,8 @@ class Authenticator(object):
                     return
 
                 # update the session.updated to now
-                """session.updated = datetime.utcnow()
-                session.save()"""
+                session.updated = datetime.utcnow()
+                session.save(db_session)
                 req.context.session = session
         
         # If the route or the route with out the id is in exceptions, session is None

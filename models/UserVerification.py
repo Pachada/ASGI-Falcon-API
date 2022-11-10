@@ -29,7 +29,7 @@ class UserVerification(Base, AsyncModel):
     status_ine = relationship(Status, foreign_keys=status_id_ine)
 
     @staticmethod
-    def get_verification_of_user(user: User):
+    async def get_verification_of_user(db_session, user: User):
 
         user_verification = UserVerification.get(UserVerification.user_id == user.id)
 

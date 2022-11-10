@@ -24,11 +24,11 @@ class PasswordRecoveryController(Controller):
             return
         
         if phone_number:
-            filter= (User.phone == str(phone_number))
+            filters = (User.phone == str(phone_number))
         else:
-            filter = (User.email == str(email))
+            filters = (User.email == str(email))
 
-        user = User.get(filter)
+        user = User.get(filters)
         if not user:
             self.response(resp, 404, error = "Usuario no encontrado")
             return

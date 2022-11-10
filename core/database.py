@@ -1,6 +1,6 @@
 import configparser
 from contextlib import asynccontextmanager
-from sqlalchemy.ext.asyncio import create_async_engine, exc, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, exc, AsyncSession as DB_Session
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -29,10 +29,10 @@ engine = create_async_engine(
 
 #db_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 def async_session_generator():
-    return sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    return sessionmaker(engine, expire_on_commit=False, class_=DB_Session)
 
 @asynccontextmanager
-async def get_db_session():
+async def get_db_session() -> DB_Session:
     try:
         async_session = async_session_generator()
         async with async_session() as session:

@@ -91,8 +91,8 @@ class SmsCrontab(NotificationCronsUtils):
     async def __delete_sended_and_with_errors(self):
         await SmsPool.delete_multiple(or_(SmsPool.status_id == Status.SEND, SmsPool.send_attemps >= self.max_send_attempts))
 
-    def main(self, query_limit):
-        self.send_sms(query_limit)
+    async def main(self, query_limit):
+        await self.send_sms(query_limit)
 
 
 if __name__ == "__main__":

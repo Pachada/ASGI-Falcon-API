@@ -31,9 +31,7 @@ class ConfirmEmailController(Controller):
             self.response(resp, 500, error=self.PROBLEM_SAVING_TO_DB)
             return
 
-        SmtpClient.send_email_to_pool(
-            EmailTemplate.CONFIRM_EMAIL, user, {"token": user_verification.email_otp}, send_now=True
-        )
+        SmtpClient.send_email_to_pool(EmailTemplate.CONFIRM_EMAIL, user, {"token": user_verification.email_otp}, send_now=True)
 
     def __validate_code(self, req: Request, resp: Response, token: str = None):
         data: dict = self.get_req_data(req, resp)
