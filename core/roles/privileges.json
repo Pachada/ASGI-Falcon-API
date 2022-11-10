@@ -168,7 +168,11 @@
         "name": "delete_files_s3",
         "method": "DELETE",
         "resource": "FileS3Controller"
+    },
+    {
+        "name": "post_confirmphone",
+        "method": "POST",
+        "resource": "ConfirmPhoneController"
     }
-
 
 ]

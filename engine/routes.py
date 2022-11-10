@@ -39,6 +39,7 @@ class RouteLoader:
         self.server.add_route(self.context_prefix + '/sessions', sessionController)
         self.server.add_route(self.context_prefix + '/password-recovery/{action}', passwordrecoveryController) #request, validate-code, change-password
         self.server.add_route(self.context_prefix + '/confirm-email/{action}', confirmemailController) #request, validate-code
+        self.server.add_route(self.context_prefix + '/confirm-phone/{action}', confirmphoneController) #request, validate-code
         self.server.add_route(self.context_prefix + '/status', statusController)
         self.server.add_route(self.context_prefix + '/status/{id:int}', statusController)
         self.server.add_route(self.context_prefix + '/files/local', filelocalController)

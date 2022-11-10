@@ -1,0 +1,23 @@
+{
+    "name": "post_confirmphone",
+    "method": "POST",
+    "resource": "ConfirmPhoneController"
+},
+{
+    "name": "get_confirmphone",
+    "method": "GET",
+    "resource": "ConfirmPhoneController"
+},
+{
+    "name": "put_confirmphone",
+    "method": "PUT",
+    "resource": "ConfirmPhoneController"
+},
+{
+    "name": "delete_confirmphone",
+    "method": "DELETE",
+    "resource": "ConfirmPhoneController"
+},
+
+
+"post_confirmphone", "get_confirmphone", "delete_confirmphone", "put_confirmphone"

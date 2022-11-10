@@ -11,6 +11,7 @@ from controllers.FileS3Controller import FileS3Controller
 from controllers.PasswordRecoveryController import PasswordRecoveryController
 from controllers.ConfirmEmailController import ConfirmEmailController
 from controllers.SessionController import SessionController
+from controllers.ConfirmPhoneController import ConfirmPhoneController
 
 testController = TestController()
 healthcheckController = HealthCheckController()
@@ -25,3 +26,4 @@ files3Controller = FileS3Controller()
 passwordrecoveryController = PasswordRecoveryController()
 confirmemailController = ConfirmEmailController()
 sessionController = SessionController()
+confirmphoneController = ConfirmPhoneController()

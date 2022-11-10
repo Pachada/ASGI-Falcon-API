@@ -2,12 +2,12 @@
     {
         "role":"root",
         "groups":["session", "notifications", "backoffice", "files", "status"],
-        "privileges":["post_passwordrecovery", "post_confirmemail"]
+        "privileges":["post_passwordrecovery", "post_confirmemail", "post_confirmphone"]
     },
     {
         "role":"user",
         "groups":["session", "notifications", "backoffice_users", "files", "status"],
-        "privileges":["post_passwordrecovery", "post_confirmemail"]
+        "privileges":["post_passwordrecovery", "post_confirmemail", "post_confirmphone"]
     }
 
 ]
