@@ -1,12 +1,12 @@
 from models.User import User, datetime
-from models.SmsPool import SmsPool, SmsTemplate, DB_Session
+from models.SmsPool import SmsPool, SmsTemplate, AsyncSession
 from crons.SmsCrontab import SmsCrontab
 
 
 class SmsClient:
 
     @staticmethod
-    async def send_sms_to_pool(db_session: DB_Session, template_id: int, user, data: dict = None, send_time: datetime = datetime.utcnow(), send_now=False):
+    async def send_sms_to_pool(db_session: AsyncSession, template_id: int, user, data: dict = None, send_time: datetime = datetime.utcnow(), send_now=False):
         """
         Gives format to the message to send and save it to the sms pool.
 
@@ -56,7 +56,7 @@ class SmsClient:
         return message
 
     @staticmethod
-    async def __save_to_pool(db_session: DB_Session, template: SmsTemplate, message: str, send_time: datetime, user: User):
+    async def __save_to_pool(db_session: AsyncSession, template: SmsTemplate, message: str, send_time: datetime, user: User):
         sms = SmsPool(
             user_id=user.id,
             template_id=template.id,

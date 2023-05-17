@@ -14,12 +14,12 @@ class PushNotificationPool(Base, AsyncModel):
         BigInteger, ForeignKey(PushNotificationTemplate.id), nullable=False
     )
     status_id = Column(BigInteger, ForeignKey(Status.id), default=Status.PENDING)
-    send_time = Column(DateTime, default=Utils.time())
+    send_time = Column(DateTime, default=func.now())
     message = Column(String(200), nullable=False)
     data = Column(String(200), default=None)  # JSON/DICT for information on the push
     send_attemps = Column(mysql.TINYINT(1), default=0)
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, default=func.now())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
 
     user = relationship(User)
     template = relationship(PushNotificationTemplate)

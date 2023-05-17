@@ -20,7 +20,7 @@ class TestController(Controller):
     app_clients = defaultdict(list)
 
     async def on_get(self, req: Request, resp: Response, id: int = None):
-        async with get_db_session() as session:
+        async with req.context.db_session as session:
             if id:
                 row: User = await User.get(session, id, get_relationtships=User.person)
                 if not row:

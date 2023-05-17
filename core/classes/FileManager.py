@@ -132,8 +132,8 @@ class FileManager:
         return None, None
 
     @staticmethod
-    def delete_file(bucket_name, file_id, aws_region, profile=None):
-        file = File.get(file_id)
+    def delete_file(db_session, bucket_name, file_id, aws_region, profile=None):
+        file = File.get(db_session, file_id)
         if not file:
             return None, None
 

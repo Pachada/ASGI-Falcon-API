@@ -11,7 +11,7 @@ class EmailSent(Base, AsyncModel):
     user_id = Column(BigInteger, ForeignKey(User.id), default=None)
     template_id = Column(BigInteger, ForeignKey(EmailTemplate.id), nullable=False)
     content = Column(Text, nullable=False)
-    created = Column(DateTime, default=Utils.time())
+    created = Column(DateTime, default=func.now())
 
     template = relationship(EmailTemplate)
     user = relationship(User)

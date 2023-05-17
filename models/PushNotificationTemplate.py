@@ -17,8 +17,8 @@ class PushNotificationTemplate(Base, AsyncModel):
     catalogue_id = Column(
         BigInteger, ForeignKey(PushNotificationCatalogue.id), nullable=False
     )
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, default=func.now())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
     enable = Column(Boolean, default=True)
 
     catalogue = relationship(PushNotificationCatalogue)

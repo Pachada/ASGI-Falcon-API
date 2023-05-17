@@ -14,10 +14,10 @@ class EmailPool(Base, AsyncModel):
     status_id = Column(BigInteger, ForeignKey(Status.id), default=Status.PENDING)
     subject = Column(String(100), nullable=False)
     content = Column(Text, nullable=False)
-    send_time = Column(DateTime, default=Utils.time())
+    send_time = Column(DateTime, default=func.now())
     send_attemps = Column(mysql.TINYINT(1), default=0)
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, default=func.now())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
 
     template = relationship(EmailTemplate)
     status = relationship(Status)

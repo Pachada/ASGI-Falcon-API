@@ -10,11 +10,14 @@ class Session(Base, AsyncModel):
     user_id = Column(BigInteger, ForeignKey(User.id), nullable=False)
     device_id = Column(BigInteger, ForeignKey(Device.id), nullable=False)
     token = Column(String(120), nullable=False)
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, default=func.now())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
     enable = Column(Boolean, default=True)
 
     device = relationship(Device)
     user = relationship(User)
 
     blacklist = {}
+    
+    def __repr__(self) -> str:
+        return f"{self.user_id}, {self.device_id}"

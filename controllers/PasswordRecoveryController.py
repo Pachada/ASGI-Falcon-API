@@ -1,5 +1,5 @@
 from core.Controller import Controller, Utils, Request, Response, json, datetime
-from core.classes.Authenticator import Authenticator
+from core.classes.middleware.Authenticator import Authenticator
 from models.UserVerification import UserVerification, User
 from models.EmailTemplate import EmailTemplate
 from core.classes.SmtpClient import SmtpClient

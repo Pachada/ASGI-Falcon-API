@@ -1,6 +1,6 @@
 from falcon.asgi import Response, Request
 from models.Session import Session
-from models.User import User, DB_Session
+from models.User import User, AsyncSession
 from models.Device import Device, get_db_session
 from core.Utils import Utils, logger, datetime
 from sqlalchemy import and_, or_
@@ -120,9 +120,9 @@ class Authenticator(object):
 
                 # update the session.updated to now
                 session.updated = datetime.utcnow()
-                session.save(db_session)
+                await session.save(db_session)
                 req.context.session = session
-        
+
         # If the route or the route with out the id is in exceptions, session is None
         elif req.path in self.exceptions or "/".join(req.path.split('/')[:-1]) in self.exceptions:
             req.context.session = None
@@ -130,7 +130,7 @@ class Authenticator(object):
     async def process_response(self, req: Request, resp: Response, resource, req_succeeded):
         # Post-processing of the response (after routing).
         pass
-    
+
     async def process_request_ws(self, req, ws):
         """Process a WebSocket handshake request before routing it.
 
@@ -168,7 +168,7 @@ class Authenticator(object):
         """
 
     @staticmethod
-    async def login(db_session: DB_Session, username, password, device_uuid="unknown"):
+    async def login(db_session: AsyncSession, username, password, device_uuid="unknown"):
         if user := await User.get(db_session, or_(User.username == username, User.email == username)):
             password = Utils.get_hashed_string(password + user.salt)
             if password == user.password:
@@ -181,7 +181,7 @@ class Authenticator(object):
         return Authenticator.start_user_session(user, device_uuid)
 
     @staticmethod
-    async def start_user_session(db_session: DB_Session, user: User, device_uuid):
+    async def start_user_session(db_session: AsyncSession, user: User, device_uuid):
         device = await Device.get(db_session, and_(Device.user_id == user.id, Device.uuid == device_uuid))
 
         if device is None:
@@ -191,10 +191,7 @@ class Authenticator(object):
             )
             await device.save(db_session)
 
-        session = await Session.get(db_session, and_(Session.user_id == user.id, Session.device_id == device.id))
-
-        if not session:
-            session = Session(user_id=user.id, device_id=device.id)
+        session = await Session.get(db_session, and_(Session.user_id == user.id, Session.device_id == device.id)) or Session(user_id=user.id, device_id=device.id)
 
         session.token = Utils.generate_token()
         await session.save(db_session)
@@ -202,5 +199,6 @@ class Authenticator(object):
         return await Session.get(db_session, Session.id == session.id)
 
     @staticmethod
-    async def logout(db_session: DB_Session, session: Session):
+    async def logout(db_session: AsyncSession, session: Session):
+        print("logout")
         return await session.soft_delete(db_session)

@@ -20,7 +20,6 @@ class FileS3Controller(FileController, FileAbstract):
         self.public_bucket = self.config.get("S3", "public_bucket_name")
         self.video_bucket = self.config.get("S3", "video_bucket_name")
         self.region = self.config.get("S3", "region")
-        self.profile = self.config.get("S3", "profile_name")
 
     async def on_get(self, req: Request, resp: Response, id: int = None):
         if not id:
@@ -50,22 +49,23 @@ class FileS3Controller(FileController, FileAbstract):
             self.response(resp, 405)
             return
 
-        file, deleted = FileManager.delete_file(self.private_bucket, id, self.region)
-        if not file:
-            self.response(resp, 404, error=self.ID_NOT_FOUND)
-            return
+        async with req.context.db_session as db_session:
+            file, deleted = FileManager.delete_file(self.private_bucket, id, self.region)
+            if not file:
+                self.response(resp, 404, error=self.ID_NOT_FOUND)
+                return
 
-        if not deleted:
-            self.response(resp, 500, error="Error deleting file from S3")
-            return
+            if not deleted:
+                self.response(resp, 500, error="Error deleting file from S3")
+                return
 
-        if not file.delete():
-            self.response(
-                resp,
-                500,
-                error="File deleted from S3, but failed to deleted from database",
-            )
-            return
+            if not file.delete(db_session):
+                self.response(
+                    resp,
+                    500,
+                    error="File deleted from S3, but failed to deleted from database",
+                )
+                return
 
         self.response(resp, 200, Utils.serialize_model(file))
 

@@ -1,6 +1,6 @@
 [
     {
-        "role":"root",
+        "role":"admin",
         "groups":["session", "notifications", "backoffice", "files", "status"],
         "privileges":["post_passwordrecovery", "post_confirmemail", "post_confirmphone"]
     },

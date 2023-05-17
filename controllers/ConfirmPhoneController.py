@@ -19,7 +19,7 @@ class ConfirmPhoneController(Controller):
             self.response(resp, 409, error="This user phone is already verified")
             return
 
-        async with get_db_session() as db_session:
+        async with req.context.db_session as db_session:
             user_verification: UserVerification = await UserVerification.get_verification_of_user(db_session, user)
             if not user_verification: 
                 self.response(resp, 500, error = "Problem with user verification")
@@ -45,7 +45,7 @@ class ConfirmPhoneController(Controller):
             self.response(resp, 400, error="otp field is required")
             return
 
-        async with get_db_session() as db_session:
+        async with req.context.db_session as db_session:
             user_verification: UserVerification = UserVerification.get(db_session, UserVerification.email_otp == str(phone_code))
             if not user_verification:
                 self.response(resp, 401, message="Incorrect code")

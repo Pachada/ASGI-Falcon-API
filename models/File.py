@@ -13,8 +13,8 @@ class File(Base, AsyncModel):
     hash = Column(String(255), nullable=False)
     is_thumbnail = Column(mysql.TINYINT(1), default=0)
     url = Column(String(255), default=None)
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, default=func.now())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
     enable = Column(Boolean, default=True)
 
 

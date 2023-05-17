@@ -12,6 +12,6 @@ class SmsTemplate(Base, AsyncModel):
     name = Column(String(45), nullable=False)
     description = Column(String(500), nullable=False)
     message = Column(String(160), nullable=False)
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, default=func.now())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
     enable = Column(Boolean, default=True)

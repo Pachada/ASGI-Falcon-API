@@ -14,8 +14,8 @@ class PushNotificationSent(Base, AsyncModel):
     template_id = Column(BigInteger, ForeignKey(PushNotificationTemplate.id))
     message = Column(String(200), nullable=False)
     readed = Column(mysql.TINYINT(1), default=0)
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, default=func.now())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
 
     user = relationship(User)
     device = relationship(Device)

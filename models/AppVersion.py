@@ -7,7 +7,7 @@ class AppVersion(Base, AsyncModel):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     version = Column(Float, nullable=False)
-    created = Column(DateTime, default=Utils.time())
+    created = Column(DateTime, default=func.now())
 
     @staticmethod
     def get_actual_version() -> float:

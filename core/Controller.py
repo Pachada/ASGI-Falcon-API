@@ -35,7 +35,7 @@ class Controller:
             data["error_code"] = error_code
         resp.text = json.dumps(data, ensure_ascii=False)
 
-    def set_values(self, row: AsyncModel, data: dict):
+    async def set_values(self, db_session: AsyncSession, row: AsyncModel, data: dict):
         try:
             for col in row.__table__.columns.keys():
                 if col in data:
@@ -46,7 +46,7 @@ class Controller:
 
                     setattr(row, col, data[col])
 
-            return row.save()
+            return await row.save(db_session)
 
         except Exception as exc:
             logger.error("[ERROR-SETTING_VALUES]")
@@ -64,7 +64,7 @@ class Controller:
 
         return data
 
-    async def get_model_object(self, db_session: DB_Session, resp: Response, model: AsyncModel, id: int = None):
+    async def get_model_object(self, db_session: AsyncSession, resp: Response, model: AsyncModel, id: int = None):
         if not id:
             self.response(resp, 405)
             return
@@ -88,7 +88,7 @@ class Controller:
         recursive=False,
         recursiveLimit=2,
     ):
-        async with get_db_session() as db_session:
+        async with req.context.db_session as db_session:
             if id:
                 row = await self.get_model_object(db_session, resp, model, id)
                 if not row:
@@ -98,7 +98,7 @@ class Controller:
 
             self.response(resp, 200, Utils.serialize_model(row, recursive=recursive, recursiveLimit=recursiveLimit),)
 
-    def generic_on_post(
+    async def generic_on_post(
         self,
         req: Request,
         resp: Response,
@@ -119,14 +119,14 @@ class Controller:
 
         new_record = model()
 
-        if not self.set_values(new_record, data):
-            self.response(resp, 500, error=self.PROBLEM_SAVING_TO_DB)
-            return
+        async with req.context.db_session as db_session:
+            if not await self.set_values(db_session, new_record, data):
+                self.response(resp, 500, error=self.PROBLEM_SAVING_TO_DB)
+                return
 
         self.response(resp, 201, Utils.serialize_model(new_record))
-        #resp.append_header("content_location", f"/{content_location}/{new_record.id}")
 
-    def generic_on_put(
+    async def generic_on_put(
         self,
         req: Request,
         resp: Response,
@@ -138,23 +138,25 @@ class Controller:
         if not id:
             self.response(resp, 405)
             return
-        row = self.get_model_object(resp, model, id)
-        if not row:
-            return
-        if not data:
-            data = self.get_req_data(req, resp)
-        if not data:
-            return
-        if extra_data:
-            data.update(extra_data)
+        
+        async with req.context.db_session as db_session:
+            row = await self.get_model_object(db_session, resp, model, id)
+            if not row:
+                return
+            if not data:
+                data = await self.get_req_data(req, resp)
+            if not data:
+                return
+            if extra_data:
+                data.update(extra_data)
 
-        if not self.set_values(row, data):
-            self.response(resp, 500, self.PROBLEM_SAVING_TO_DB)
-            return
+            if not await self.set_values(db_session, row, data):
+                self.response(resp, 500, self.PROBLEM_SAVING_TO_DB)
+                return
 
         self.response(resp, 200, Utils.serialize_model(row))
 
-    def generic_on_delete(
+    async def generic_on_delete(
         self,
         req: Request,
         resp: Response,
@@ -168,24 +170,25 @@ class Controller:
             self.response(resp, 405)
             return
 
-        row: AsyncModel = self.get_model_object(resp, model, id)
-        if not row:
-            return
-
-        data = Utils.serialize_model(row)
-
-        if delete_file:
-            row.delete_model_files(req, resp)
-            if not row.exists_in_database():  # Checamos que el row aún exista
-                self.response(resp, 200, data)
-                if return_row:
-                    return row
+        async with req.context.db_session as db_session:
+            row: AsyncModel = await self.get_model_object(db_session, resp, model, id)
+            if not row:
                 return
 
-        deleted = row.soft_delete() if soft_delete else row.delete()
-        if not deleted:
-            self.response(resp, 500, error=self.PROBLEM_SAVING_TO_DB)
-            return
+            data = Utils.serialize_model(row)
+
+            if delete_file:
+                row.delete_model_files(req, resp)
+                if not row.exists_in_database():  # Checamos que el row aún exista
+                    self.response(resp, 200, data)
+                    if return_row:
+                        return row
+                    return
+
+            deleted = await row.soft_delete(db_session) if soft_delete else await row.delete(db_session)
+            if not deleted:
+                self.response(resp, 500, error=self.PROBLEM_SAVING_TO_DB)
+                return
 
         self.response(resp, 200, data)
 

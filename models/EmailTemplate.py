@@ -15,6 +15,6 @@ class EmailTemplate(Base, AsyncModel):
     description = Column(String(500), nullable=False)
     subject = Column(String(100), nullable=False)
     html = Column(Text, nullable=False)
-    created = Column(DateTime, default=Utils.time())
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    created = Column(DateTime, default=func.now())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
     enable = Column(Boolean, default=True)

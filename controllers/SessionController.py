@@ -1,6 +1,6 @@
 from core.Controller import Controller, Utils, Request, Response
-from core.classes.Authenticator import Authenticator
-from models.Session import Session, get_db_session, DB_Session
+from core.classes.middleware.Authenticator import Authenticator
+from models.Session import Session
 from models.Role import Role
 
 
@@ -37,7 +37,7 @@ class SessionController(Controller):
             self.response(resp, 400, error="Username and password are required")
             return
 
-        async with get_db_session() as db_session:
+        async with req.context.db_session as db_session:
             session = await Authenticator.login(db_session, username, password, uuid)
             if not session:
                 self.response(resp, 401, error="Invalid credentials")
@@ -48,7 +48,7 @@ class SessionController(Controller):
             self.response(resp, 200, data, message="Session started")
 
     async def __logout(self, req: Request, resp: Response):
-        async with get_db_session() as db_session:
+        async with req.context.db_session as db_session:
             session = req.context.session
             await Authenticator.logout(db_session, session)
             self.response(resp, 200, message="Session ended")

@@ -18,7 +18,7 @@ class User(Base, AsyncModel):
     role_id = Column(BigInteger, ForeignKey(Role.id), default=Role.USER)
     person_id = Column(BigInteger, ForeignKey(Person.id))
     created = Column(DateTime, server_default=func.now())
-    updated = Column(DateTime, server_default=func.now(), on_update=func.now())
+    updated = Column(DateTime, server_default=func.now(), onupdate=func.now())
     enable = Column(Boolean, default=True)
 
     # Verifications
@@ -42,7 +42,7 @@ class User(Base, AsyncModel):
         return today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
 
     @staticmethod
-    async def check_if_user_exists(db_session: DB_Session, username, email):
+    async def check_if_user_exists(db_session: AsyncSession, username, email):
         if username:
             if check_username := await User.get(db_session, User.username == username):
                 return True, "This username already exists"

@@ -13,7 +13,7 @@ class UserVerification(Base, AsyncModel):
     file_id_ine = Column(BigInteger, ForeignKey(File.id), default=None)
     status_id_ine = Column(BigInteger, ForeignKey(Status.id), default=Status.MISSING)
     comments = Column(String(450), default=None)
-    updated = Column(DateTime, default=Utils.time(), onupdate=Utils.time())
+    updated = Column(DateTime, default=func.now(), onupdate=func.now())
 
     # OTP
     otp = Column(String(6), default=None)

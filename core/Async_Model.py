@@ -26,7 +26,7 @@ from core.database import Base, engine, get_db_session
 from core.Utils import Utils, logger
 from sqlalchemy import update
 from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession as DB_Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import Select
 
 
@@ -39,13 +39,13 @@ class AsyncModel:
     get one, get all, delete and save. The Model class inherits new models.
     """
 
-    def refresh_object(self, db_session: DB_Session, attribute_names=None):
+    def refresh_object(self, db_session: AsyncSession, attribute_names=None):
         db_session.refresh(self, attribute_names)
 
     def get_formatters(self):
         return {attribute.name: Utils.date_formatter for attribute in self.__table__.columns if attribute.type.python_type in {datetime, date}}
 
-    async def exists_in_database(self, db_session: DB_Session):
+    async def exists_in_database(self, db_session: AsyncSession):
         """
         Return True if the object exists in database, False otherwise.
         """
@@ -80,7 +80,7 @@ class AsyncModel:
                 file.delete_file_from_local()
 
     @classmethod
-    async def get(cls, db_session: DB_Session, value, get_relationtships=True, deleted=False, join=None, order_by=None):
+    async def get(cls, db_session: AsyncSession, value, get_relationtships=True, deleted=False, join=None, order_by=None):
         """
         The get() method can process a query with some parameters to get a response.
 
@@ -125,7 +125,7 @@ class AsyncModel:
         return result.scalars().first()
 
     @classmethod
-    async def get_all(cls, session: DB_Session, get_relationtships=True, limit=None, orderBy=None, deleted=False, join=None, left_join=False):
+    async def get_all(cls, db_session: AsyncSession, filter=None, get_relationtships=True, limit=None, orderBy=None, deleted=False, join=None, left_join=False):
         """
         The get_all() method process a query and returns all found values.
 
@@ -162,6 +162,10 @@ class AsyncModel:
                 query = query.join(join, isouter=left_join)
         if not deleted and "enable" in cls.__table__.columns.keys():
             query = query.where(cls.enable == 1)
+        if filter and isinstance(filter, int):
+            query = query.where(cls.id == filter)
+        else:
+            query = query.where(filter)
         if orderBy is not None:
             if isinstance(orderBy, list):
                 for ord in orderBy:
@@ -171,21 +175,21 @@ class AsyncModel:
         if limit is not None:
             query = query.limit(limit)
 
-        result = await session.execute(query)
+        result = await db_session.execute(query)
         return result.scalars().all()
 
-    async def save(self, session: DB_Session):
+    async def save(self, db_session: AsyncSession):
         try:
-            session.add(self)
-            await session.commit()
+            db_session.add(self)
+            await db_session.commit()
             return True
         except Exception as exc:
             print("[ERROR-SAVING]")
             print(exc)
-            await session.rollback()
+            await db_session.rollback()
             return False
 
-    async def soft_delete(self, session: DB_Session):
+    async def soft_delete(self, db_session: AsyncSession):
         """
         The soft_delete() method changes the status of a row in the enable column into *deleted* by changing its
         value to 0, this indicate that the row has not been deteled at all but in next queries this row will not be
@@ -198,13 +202,13 @@ class AsyncModel:
         """
         try:
             self.enable = 0
-            return await self.save(session)
+            return await self.save(db_session)
         except Exception as exc:
             logger.error("[ERROR-SOFT-DELETING]")
             logger.error(exc)
             return False
 
-    async def delete(self, session: DB_Session):
+    async def delete(self, db_ession: AsyncSession):
         """
         The delete() method deletes a row from database, if something went wrong
         delete() can roll back changes made too.
@@ -215,21 +219,21 @@ class AsyncModel:
             True if delete and commit is process successful, False otherwise.
         """
         try:
-            session.delete(self)
-            await session.commit()
+            db_ession.delete(self)
+            await db_ession.commit()
             return True
         except Exception as exc:
-            await session.rollback()
+            await db_ession.rollback()
             logger.error("[ERROR-DELETING]")
             logger.error(exc)
             return False
 
     @classmethod
-    async def delete_multiple(cls, session: DB_Session, filter):
+    async def delete_multiple(cls, db_session: AsyncSession, filter):
         try:
             query = cls.__table__.delete().where(filter)
-            session.execute(query)
-            await session.commit()
+            db_session.execute(query)
+            await db_session.commit()
             return True
         except Exception as exc:
             logger.error("[ERROR-DELETING-MULTIPLE]")
@@ -237,7 +241,7 @@ class AsyncModel:
             return False
 
     @classmethod
-    async def count(cls, session: DB_Session, filter=None, deleted=False, join=None):
+    async def count(cls, session: AsyncSession, filter=None, deleted=False, join=None):
         """
         The count() method counts all rows depending its parameters wich can be filtered,
         deleted or make a join.
@@ -275,7 +279,7 @@ class AsyncModel:
             return False
 
     @classmethod
-    async def sum(cls, session: DB_Session, field, filter=None):
+    async def sum(cls, session: AsyncSession, field, filter=None):
         """
         The sum() method sums all rows of a field, if there is not result then returns 0.
 
@@ -304,7 +308,7 @@ class AsyncModel:
             return False
 
     @classmethod
-    async def max(cls, session: DB_Session, field, filter=None):
+    async def max(cls, session: AsyncSession, field, filter=None):
         """
         The max() method process a query and returns the max value of a field.
 
@@ -334,7 +338,7 @@ class AsyncModel:
             return False
 
     @classmethod
-    async def min(cls, session: DB_Session, field, filter=None):
+    async def min(cls, session: AsyncSession, field, filter=None):
         """
         The min() method process a query and returns the min value of a field.
 
@@ -364,7 +368,7 @@ class AsyncModel:
             return False
 
     @classmethod
-    async def distinct(cls, session: DB_Session, field, filter=None, deleted=False):
+    async def distinct(cls, session: AsyncSession, field, filter=None, deleted=False):
         try:
             if field and hasattr(cls, field):
                 field_ = getattr(cls, field, None)
@@ -380,7 +384,7 @@ class AsyncModel:
             return False
 
     @staticmethod
-    async def save_all(session: DB_Session, instances):
+    async def save_all(session: AsyncSession, instances):
         """
         The save_all() method adds more than one objects of Models and saves them to the database,
         if something went wrong save_all() can roll back changes made too.
@@ -409,7 +413,7 @@ class AsyncModel:
             return False
 
     @staticmethod
-    async def remove(session: DB_Session, instance):
+    async def remove(session: AsyncSession, instance):
         """
         The remove() method removes an instance.
 

@@ -11,7 +11,7 @@ class SmsSent(Base, AsyncModel):
     user_id = Column(BigInteger, ForeignKey(User.id), default=None)
     template_id = Column(BigInteger, ForeignKey(SmsTemplate.id), nullable=False)
     message = Column(Text, nullable=False)
-    created = Column(DateTime, default=Utils.time())
+    created = Column(DateTime, default=func.now())
 
     template = relationship(SmsTemplate)
     user = relationship(User)

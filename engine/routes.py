@@ -1,6 +1,6 @@
 from controllers import *
 import configparser
-from core.classes.Authenticator import Authenticator
+from core.classes.middleware.Authenticator import Authenticator
 from falcon import App
 from core.Utils import Utils
 

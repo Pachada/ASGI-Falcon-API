@@ -3,7 +3,7 @@ from random import randint, randrange
 import datetime
 from core.Utils import Utils, logger
 from models.User import User
-from core.classes.Authenticator import Authenticator, Session
+from core.classes.middleware.Authenticator import Authenticator, Session
 from models.Pool_Match import Pool_Match, Match, Pool
 from models.Tiebreaker_Rules import Tiebreaker_Rules, and_
 from models.Sport import Sport
