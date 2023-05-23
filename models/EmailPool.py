@@ -1,4 +1,4 @@
-from core.Async_Model import *
+from core.AsyncModel import *
 from models.EmailTemplate import EmailTemplate
 from models.Status import Status
 from models.User import User

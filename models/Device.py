@@ -1,4 +1,4 @@
-from core.Async_Model import *
+from core.AsyncModel import *
 from models.User import User
 from models.AppVersion import AppVersion
 

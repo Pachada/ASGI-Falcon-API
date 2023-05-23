@@ -1,4 +1,4 @@
-from core.Async_Model import *
+from core.AsyncModel import *
 from models.SmsTemplate import SmsTemplate
 from models.User import User
 

@@ -1,4 +1,4 @@
-from core.Async_Model import *
+from core.AsyncModel import *
 
 
 class SmsTemplate(Base, AsyncModel):

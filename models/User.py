@@ -1,5 +1,5 @@
 from functools import cached_property
-from core.Async_Model import *
+from core.AsyncModel import *
 from models.Role import Role
 from models.Person import Person
 

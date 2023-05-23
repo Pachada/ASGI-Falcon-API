@@ -1,4 +1,4 @@
-from core.Async_Model import *
+from core.AsyncModel import *
 from core.Utils import Utils
 from models.NewsType import NewsType
 from models.User import User
